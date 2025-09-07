@@ -1,4 +1,5 @@
-import { GalleryGrid } from '@/components/GalleryGrid'
+import dynamic from 'next/dynamic'
+const GalleryGrid = dynamic(() => import('@/components/GalleryGrid').then(m => m.GalleryGrid), { ssr: false })
 
 async function fetchImages() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/images`, { cache: 'no-store' })

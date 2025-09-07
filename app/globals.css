@@ -4,14 +4,20 @@
 
 :root {
   --bg: 255 255 255;
-  --fg: 17 24 39;
+  --fg: 11 16 32;
 }
 
-html, body, #__next {
-  height: 100%;
-}
+html, body, #__next { height: 100%; }
 
 body {
   color: rgb(var(--fg));
   background: rgb(var(--bg));
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white shadow-glow transition hover:bg-brand-700 active:scale-[0.99];
+}
+
+.card {
+  @apply rounded-xl border bg-white/60 backdrop-blur-sm shadow-sm transition hover:shadow-glow;
 }
