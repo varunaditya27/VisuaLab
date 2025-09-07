@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  role      Role     @default(USER)
+  images    Image[]
+  albums    Album[]  @relation("AlbumOwner")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Image {
+  id          String   @id @default(cuid())
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+  album       Album?   @relation(fields: [albumId], references: [id])
+  albumId     String?
+  title       String?
+  caption     String?
+  mime        String
+  width       Int
+  height      Int
+  sizeBytes   Int
+  r2Key       String   @unique
+  thumbKey    String?
+  responsive  Json?
+  exif        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tags        ImageTag[]
+}
+
+model Album {
+  id        String  @id @default(cuid())
+  name      String
+  description String?
+  owner     User    @relation("AlbumOwner", fields: [ownerId], references: [id])
+  ownerId   String
+  images    Image[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  images ImageTag[]
+}
+
+model ImageTag {
+  image   Image @relation(fields: [imageId], references: [id])
+  imageId String
+  tag     Tag   @relation(fields: [tagId], references: [id])
+  tagId   String
+
+  @@id([imageId, tagId])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
