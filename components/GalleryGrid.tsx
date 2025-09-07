@@ -3,14 +3,14 @@ import { r2PublicUrl } from '@/lib/r2'
 type ImageRec = {
   id: string
   title?: string | null
-  thumbKey?: string | null
+  thumbUrl?: string | null
 }
 
 export function GalleryGrid({ images }: { images: ImageRec[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
       {images?.map((img) => {
-        const src = img.thumbKey ? r2PublicUrl(img.thumbKey) : null
+        const src = img.thumbUrl ?? null
         return (
           <a key={img.id} href="#" className="group overflow-hidden rounded-md border bg-white">
             {src ? (
