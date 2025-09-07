@@ -27,8 +27,21 @@ export async function r2GetSignedUrl(bucket: string, key: string) {
 }
 
 export function r2PublicUrl(key: string) {
-  // If bucket is public and base URL provided, construct URL
   const base = process.env.R2_PUBLIC_BASE_URL
-  if (!base) return null
-  return `${base}/${key}`
+  const bucket = process.env.R2_BUCKET
+  const account = process.env.R2_ACCOUNT_ID
+  if (base) {
+    // If using cloudflarestorage.com base, include bucket segment if missing
+    if (base.includes('cloudflarestorage.com')) {
+      const withBucket = base.endsWith(`/${bucket}`) || base.includes(`/${bucket}/`) ? base : `${base}/${bucket}`
+      return `${withBucket}/${key}`
+    }
+    // Assume base already points to bucket root
+    return `${base.replace(/\/$/, '')}/${key}`
+  }
+  if (bucket && account) {
+    // Default to R2 dev public domain pattern
+    return `https://${bucket}.${account}.r2.dev/${key}`
+  }
+  return null
 }
