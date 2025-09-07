@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       r2Key: `${baseKey}/original.jpg`,
       thumbKey: `${baseKey}/thumb.jpg`,
       responsive: processed.responsive.map(r => ({ width: r.width, key: `${baseKey}/w${r.width}.jpg` })),
-      exif: processed.meta.exif,
+  exif: (processed.meta.exif as unknown) as any,
     },
   })
 

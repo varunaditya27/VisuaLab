@@ -19,10 +19,10 @@ export default function UploadPage() {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-medium">Upload</h2>
-      <form onSubmit={onSubmit} className="space-y-4 rounded-md border p-6">
-        <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        <button type="submit" className="rounded bg-black px-4 py-2 text-white disabled:opacity-50" disabled={!file}>
+      <h2 className="mb-4 font-display text-2xl">Upload</h2>
+      <form onSubmit={onSubmit} className="card space-y-4 p-6">
+        <input className="block w-full rounded-lg border-gray-300 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-white hover:file:bg-brand-700" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <button type="submit" className="btn-primary" disabled={!file}>
           Upload
         </button>
         {status && <p className="text-sm text-gray-600">{status}</p>}
