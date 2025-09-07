@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const id = crypto.randomUUID()
   const baseKey = `images/${userId ?? 'anon'}/${id}`
 
-  const mime = file.type || 'image/jpeg'
+    const mime = 'image/jpeg'
   const bucket = process.env.R2_BUCKET
   if (!bucket) return NextResponse.json({ error: 'R2_BUCKET not configured' }, { status: 500 })
   await r2PutObject(bucket, `${baseKey}/original.jpg`, processed.original.buffer, mime)
