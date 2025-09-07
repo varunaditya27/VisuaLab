@@ -37,3 +37,6 @@ next-env.d.ts
 
 # legacy app
 PHP-ImageGallery-master/
+
+# vscode
+.vscode/
