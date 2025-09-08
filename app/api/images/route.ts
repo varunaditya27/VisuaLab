@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { r2PublicUrl, r2GetSignedUrl } from '@/lib/r2'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const album = searchParams.get('album') || searchParams.get('albumId')
     const rows = await prisma.image.findMany({
       orderBy: { createdAt: 'desc' },
+      where: album ? { albumId: album } : undefined,
       select: { id: true, title: true, thumbKey: true },
       take: 100,
     })
