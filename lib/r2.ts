@@ -48,3 +48,16 @@ export function r2PublicUrl(key: string) {
   }
   return null
 }
+
+export async function r2GetObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+  const res = await r2Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+  // @ts-ignore - res.Body is a stream
+  const stream = res.Body as NodeJS.ReadableStream
+  const chunks: Buffer[] = []
+  await new Promise<void>((resolve, reject) => {
+    stream.on('data', (c: Buffer) => chunks.push(Buffer.from(c)))
+    stream.on('error', reject)
+    stream.on('end', () => resolve())
+  })
+  return Buffer.concat(chunks)
+}
