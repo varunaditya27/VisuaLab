@@ -1,104 +1,127 @@
-import dynamic from 'next/dynamic'
-import { Sparkles, Zap, Palette, Camera } from 'lucide-react'
-
-const GalleryGrid = dynamic(() => import('@/components/GalleryGrid').then(m => m.GalleryGrid))
-
-async function fetchImages() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/images`, { cache: 'no-store' })
-    if (!res.ok) return { images: [] }
-    return res.json()
-  } catch {
-    return { images: [] }
-  }
-}
+import Link from 'next/link'
+import { Sparkles, Zap, Palette, Camera, CheckCircle2, FolderOpen, MessageSquareHeart, Shield, Search, Cpu, Rocket } from 'lucide-react'
 
 export default async function HomePage() {
-  const { images } = await fetchImages()
-  
   return (
     <div className="relative">
-      {/* Revolutionary Hero Section */}
-      <div className="relative py-16 mb-12 overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-electric-blue/10 rounded-full blur-3xl animate-particle-float"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-neon-pink/10 rounded-full blur-3xl animate-particle-float" style={{ animationDelay: '2s' }}></div>
+      {/* Hero Section (standout) */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          {/* Animated aurora backdrop */}
+          <div className="absolute inset-0 opacity-70 blur-3xl"
+               style={{
+                 background:
+                   'radial-gradient(60% 60% at 20% 20%, rgba(0,212,255,0.20) 0%, rgba(0,212,255,0.00) 60%),\
+                    radial-gradient(60% 60% at 80% 30%, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0.00) 60%),\
+                    radial-gradient(70% 70% at 50% 80%, rgba(244,113,181,0.16) 0%, rgba(244,113,181,0.00) 60%)'
+               }}
+          />
+          {/* Subtle grid */}
+          <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         </div>
-        
-        <div className="relative text-center">
-          {/* Floating Badge */}
-          <div className="inline-flex items-center gap-2 mb-8 card-quantum px-6 py-3 animate-float">
-            <div className="w-8 h-8 rounded-full bg-aurora-primary flex items-center justify-center animate-glow-pulse">
-              <Camera size={16} className="text-white" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              Revolutionary Visual Experience
-            </span>
-            <Sparkles size={16} className="text-electric-blue animate-pulse" />
-          </div>
-          
-          {/* Hero Title */}
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-            <span className="text-holographic">VisuaLab</span>
-            <br />
-            <span className="text-gray-700">Digital Canvas</span>
-          </h1>
-          
-          {/* Hero Subtitle */}
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Where Every Pixel Tells a Story, and Every Interaction Sparks Wonder.
-            <br />
-            <span className="text-electric-blue font-medium">Transform ordinary images into extraordinary experiences.</span>
-          </p>
-          
-          {/* Feature Highlights */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="glass-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-              <Zap size={16} className="text-electric-blue" />
-              <span className="text-sm text-gray-700">Lightning Fast</span>
-            </div>
-            <div className="glass-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-              <Palette size={16} className="text-neon-pink" />
-              <span className="text-sm text-gray-700">Aurora Spectrum</span>
-            </div>
-            <div className="glass-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-              <Sparkles size={16} className="text-cyber-purple" />
-              <span className="text-sm text-gray-700">AI Enhanced</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Gallery Section */}
-      <div className="relative">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="font-heading text-2xl md:text-3xl font-bold text-holographic mb-2">
-              Explore the Gallery
-            </h2>
-            <p className="text-gray-600">
-              Discover a collection of extraordinary visual experiences
-            </p>
-          </div>
-          
-          {/* Gallery Stats */}
-          {images.length > 0 && (
-            <div className="glass-subtle rounded-2xl px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-electric-blue rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-700">
-                  {images.length} {images.length === 1 ? 'Creation' : 'Creations'}
-                </span>
+
+        <div className="container py-20 md:py-28">
+          <div className="mx-auto max-w-3xl text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 mb-6 card-quantum px-5 py-2.5 animate-float">
+              <div className="w-7 h-7 rounded-full bg-aurora-primary flex items-center justify-center animate-glow-pulse">
+                <Camera size={14} className="text-white" />
               </div>
+              <span className="text-sm font-medium text-gray-700">Modern, Extensible Media Platform</span>
+              <Sparkles size={14} className="text-electric-blue animate-pulse" />
             </div>
-          )}
+
+            {/* Title */}
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-5">
+              <span className="text-holographic">VisuaLab</span>
+              <span className="block text-gray-700">Reimagined Gallery</span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-base md:text-lg text-gray-600 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
+              From a classic PHP gallery to a responsive, accessible, and pluggable platform.
+              Build albums, moderate comments, theme it, and extend with AI and vector search.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex items-center justify-center gap-3 md:gap-4">
+              <Link href="/gallery" className="btn-holo primary inline-flex items-center gap-2">
+                Explore Gallery
+              </Link>
+              <Link href="/albums" className="btn-holo secondary inline-flex items-center gap-2">
+                View Albums
+              </Link>
+              <a href="#features" className="btn-holo ghost">Learn more</a>
+            </div>
+
+            {/* Feature chips */}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <div className="glass-subtle rounded-2xl px-3.5 py-1.5 text-sm flex items-center gap-2"><Zap size={14} className="text-electric-blue"/> Fast</div>
+              <div className="glass-subtle rounded-2xl px-3.5 py-1.5 text-sm flex items-center gap-2"><Palette size={14} className="text-neon-pink"/> Themed</div>
+              <div className="glass-subtle rounded-2xl px-3.5 py-1.5 text-sm flex items-center gap-2"><Sparkles size={14} className="text-cyber-purple"/> AI-ready</div>
+            </div>
+          </div>
         </div>
-        
-        {/* Gallery Grid */}
-        <GalleryGrid images={images} />
-      </div>
+
+        {/* Wave divider */}
+        <div className="relative -mt-10" aria-hidden>
+          <svg className="w-full h-12 text-white/70" viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path fill="currentColor" d="M0,80L60,64C120,48,240,16,360,10.7C480,5,600,27,720,37.3C840,48,960,48,1080,42.7C1200,37,1320,27,1380,21.3L1440,16L1440,0L1380,0C1320,0,1200,0,1080,0C960,0,840,0,720,0C600,0,480,0,360,0C240,0,120,0,60,0L0,0Z"></path>
+          </svg>
+        </div>
+      </section>
+      
+  {/* Core Pillars Section */}
+  <section id="features" className="relative my-16">
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><Shield size={18} className="text-electric-blue"/> Easy to Install</h3>
+            <p className="text-gray-600">One-command start, clear docs, DB migrations, and seed data for fast bootstrapping.</p>
+          </div>
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><Palette size={18} className="text-neon-pink"/> Responsive & Accessible</h3>
+            <p className="text-gray-600">Modern UI with Tailwind, keyboard-friendly, WCAG-aware, and mobile-first.</p>
+          </div>
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><FolderOpen size={18} className="text-cyber-purple"/> Universal Upload</h3>
+            <p className="text-gray-600">JPEG/PNG/WEBP/AVIF, batch upload, thumbnails, responsive sizes, and EXIF/IPTC.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid Section */}
+      <section className="relative my-16">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><MessageSquareHeart size={18} className="text-electric-blue"/> Content Management</h3>
+            <ul className="text-gray-600 space-y-1 text-sm">
+              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500"/> Albums, collections, and galleries</li>
+              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500"/> Titles, captions, alt text, license</li>
+              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500"/> Per-image privacy controls</li>
+            </ul>
+          </div>
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><Shield size={18} className="text-neon-pink"/> Users & Rights</h3>
+            <p className="text-gray-600 mb-2">Roles: Admin, Editor, Visitor. Permissions to upload, edit, delete, publish, and moderate.</p>
+          </div>
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><Search size={18} className="text-electric-blue"/> Search & Filters</h3>
+            <p className="text-gray-600">Keywords, tags, metadata, album/date/camera/license filters — fast and intuitive.</p>
+          </div>
+          <div className="card-quantum p-6">
+            <h3 className="font-heading text-xl mb-2 flex items-center gap-2"><Cpu size={18} className="text-cyber-purple"/> Modular Extensibility</h3>
+            <p className="text-gray-600">Plug-in architecture for AI generation, palettes, vector search, and more.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA to Gallery */}
+      <section className="my-16 text-center">
+        <Link href="/gallery" className="btn-holo primary inline-flex items-center gap-2">
+          <Rocket size={18}/>
+          Explore the Gallery
+        </Link>
+      </section>
       
       {/* Interactive Background Elements */}
       <div className="fixed inset-0 pointer-events-none z-0">

@@ -1,8 +1,9 @@
 "use client"
 
-import { motion } from 'framer-motion'
-import { useState } from 'react'
-import { Eye, Heart, Download, Share2, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Eye, Heart, Download, Share2, Sparkles, MessageCircle, Send, LogIn } from 'lucide-react'
+import ImageModal from './ImageModal'
 
 type ImageRec = {
   id: string
@@ -12,6 +13,23 @@ type ImageRec = {
 
 export function GalleryGrid({ images }: { images: ImageRec[] }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [likes, setLikes] = useState<Record<string, { count: number; likedByMe: boolean }>>({})
+  const [openComments, setOpenComments] = useState<string | null>(null)
+  const [commentDraft, setCommentDraft] = useState('')
+  const [comments, setComments] = useState<Record<string, Array<{ id: string; content: string; user?: { id: string; username?: string | null }; createdAt: string }>>>({})
+  const [viewer, setViewer] = useState<{ id?: string; username?: string } | null>(null)
+  const [modal, setModal] = useState<{ id: string; src: string; title?: string | null } | null>(null)
+  
+  useEffect(() => {
+    // derive logged-in user from cookie (username)
+    const usernameMatch = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
+    if (usernameMatch) setViewer({ username: decodeURIComponent(usernameMatch[1]) })
+  }, [])
+
+  const loggedIn = !!viewer?.username
+  function promptLogin(tab: 'login' | 'register' = 'login') {
+    window.dispatchEvent(new CustomEvent('visuauth:open', { detail: { tab } }))
+  }
   
   const container = {
     hidden: { opacity: 0 },
@@ -83,6 +101,7 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
   }
 
   return (
+    <>
     <motion.div
       className="galaxy-grid"
       variants={container}
@@ -92,14 +111,26 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
       {images.map((img, index) => {
         const src = img.thumbUrl ?? null
         const isHovered = hoveredId === img.id
+  const likeKey = likes[img.id]
         
         return (
+          <Fragment key={img.id}>
           <motion.div
-            key={img.id}
             className="galaxy-grid-item card-quantum group"
             variants={item}
             whileHover="hover"
-            onHoverStart={() => setHoveredId(img.id)}
+            onHoverStart={async () => {
+              setHoveredId(img.id)
+              if (!likes[img.id]) {
+                try {
+                  const res = await fetch(`/api/likes?imageId=${img.id}`)
+                  if (res.ok) {
+                    const data = await res.json()
+                    setLikes(prev => ({ ...prev, [img.id]: { count: data.count, likedByMe: !!data.likedByMe } }))
+                  }
+                } catch {}
+              }
+            }}
             onHoverEnd={() => setHoveredId(null)}
             style={{
               // Add staggered delay for aurora effect
@@ -149,19 +180,60 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
                         whileHover={{ scale: 1.1, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                         title="View"
+                        onClick={() => {
+                          if (!src) return
+                          setModal({ id: img.id, src, title: img.title ?? undefined })
+                        }}
                       >
                         <Eye size={16} />
                       </motion.button>
                       
                       <motion.button
-                        className="btn-holo ghost p-2"
+                        className={`btn-holo ghost p-2 ${likeKey?.likedByMe ? 'text-neon-pink' : ''}`}
                         whileHover={{ scale: 1.1, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        title="Like"
+                        title={likeKey?.likedByMe ? 'Unlike' : 'Like'}
+                        onClick={async () => {
+                          if (!loggedIn) {
+                            promptLogin('login')
+                            return
+                          }
+                          try {
+                            const res = await fetch('/api/likes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId: img.id }) })
+                            if (res.ok) {
+                              const data = await res.json()
+                              setLikes(prev => ({ ...prev, [img.id]: { count: data.count, likedByMe: data.likedByMe } }))
+                            }
+                          } catch {}
+                        }}
                       >
-                        <Heart size={16} />
+                        <div className="flex items-center gap-1">
+                          <Heart size={16} />
+                          <span className="text-xs">{likeKey?.count ?? 0}</span>
+                        </div>
                       </motion.button>
                       
+                      <motion.button
+                        className="btn-holo ghost p-2"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        title="Comments"
+                        onClick={async () => {
+                          setOpenComments(v => (v === img.id ? null : img.id))
+                          if (!comments[img.id]) {
+                            try {
+                              const res = await fetch(`/api/comments?imageId=${img.id}`)
+                              if (res.ok) {
+                                const data = await res.json()
+                                setComments(prev => ({ ...prev, [img.id]: data.comments }))
+                              }
+                            } catch {}
+                          }
+                        }}
+                      >
+                        <MessageCircle size={16} />
+                      </motion.button>
+
                       <motion.button
                         className="btn-holo ghost p-2"
                         whileHover={{ scale: 1.1, rotate: 5 }}
@@ -223,6 +295,77 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
               transition={{ duration: 1.5, repeat: Infinity }}
             />
           </motion.div>
+          {/* Comments Drawer */}
+          <AnimatePresence>
+            {openComments === img.id && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-3 glass-subtle rounded-2xl p-4"
+              >
+                <div className="mb-3 max-h-40 overflow-y-auto space-y-2">
+                  {(comments[img.id] || []).map(c => (
+                    <div key={c.id} className="text-sm">
+                      <span className="font-medium text-gray-800">{c.user?.username ?? 'User'}</span>
+                      <span className="text-gray-500 ml-2">{new Date(c.createdAt).toLocaleString()}</span>
+                      <p className="text-gray-700">{c.content}</p>
+                    </div>
+                  ))}
+                  {(!comments[img.id] || comments[img.id].length === 0) && (
+                    <div className="text-sm text-gray-500">No comments yet.</div>
+                  )}
+                </div>
+        <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const draft = commentDraft.trim()
+                    if (!draft) return
+          if (!loggedIn) {
+            promptLogin('login')
+            return
+          }
+          // Request challenge from server and solve client-side
+          const chal = await fetch('/api/maptcha').then(r => r.json()).catch(() => null)
+          if (!chal) return
+          const { a, b, issued, sig } = chal
+          const answer = a + b
+                    try {
+                      const res = await fetch('/api/comments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageId: img.id, content: draft, a, b, issued, sig, answer })
+                      })
+                      if (res.ok) {
+                        setCommentDraft('')
+                        const list = await fetch(`/api/comments?imageId=${img.id}`).then(r => r.json())
+                        setComments(prev => ({ ...prev, [img.id]: list.comments }))
+                      }
+                    } catch {}
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    value={commentDraft}
+                    onChange={(e) => setCommentDraft(e.target.value)}
+                    placeholder={loggedIn ? 'Write a comment' : 'Write a comment (login required)'}
+                    className="input-neural flex-1"
+                    maxLength={500}
+                  />
+                  <button className="btn-holo primary" type="submit">
+                    <Send size={16} />
+                    <span className="sr-only">Send</span>
+                  </button>
+                  {!loggedIn && (
+                    <button type="button" className="btn-holo ghost" title="Login" onClick={() => promptLogin('login')}>
+                      <LogIn size={16} />
+                    </button>
+                  )}
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          </Fragment>
         )
       })}
       
@@ -250,5 +393,17 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
         ))}
       </div>
     </motion.div>
+    {/* Image Modal */}
+    <AnimatePresence>
+      {modal ? (
+        <ImageModal
+          src={modal.src}
+          title={modal.title ?? undefined}
+          imageId={modal.id}
+          onClose={() => setModal(null)}
+        />
+      ) : null}
+    </AnimatePresence>
+    </>
   )
 }

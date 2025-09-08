@@ -41,6 +41,19 @@ export default function SiteHeader() {
     if (usernameMatch) setUsername(decodeURIComponent(usernameMatch[1]))
   }, [])
 
+  // Allow other components to trigger the auth modal
+  useEffect(() => {
+    function onOpenAuth(e: Event) {
+      try {
+        const ce = e as CustomEvent<{ tab?: 'login' | 'register' }>
+        if (ce.detail?.tab) setAuthInitialTab(ce.detail.tab)
+      } catch {}
+      setAuthOpen(true)
+    }
+    window.addEventListener('visuauth:open', onOpenAuth as EventListener)
+    return () => window.removeEventListener('visuauth:open', onOpenAuth as EventListener)
+  }, [])
+
   async function handleLogin(username: string, password: string): Promise<{ ok: boolean; message?: string }> {
     try {
       const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) })
@@ -103,28 +116,26 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-heavy">
-      <div className="container flex h-20 items-center justify-between">
-        {/* Revolutionary Logo */}
+      <div className="container flex h-16 items-center justify-between">
+        {/* Brand */}
         <Link href="/" className="group flex items-center gap-3 transition-transform duration-300 hover:scale-105">
           <div className="relative">
-            <div className="rounded-2xl bg-aurora-primary p-3 text-white shadow-aurora-glow animate-float group-hover:animate-glow-pulse">
-              <Camera size={24} className="transition-transform duration-300 group-hover:rotate-12" />
+            <div className="rounded-xl bg-aurora-primary p-2.5 text-white shadow-aurora-glow">
+              <Camera size={20} />
             </div>
-            <div className="absolute inset-0 rounded-2xl bg-aurora-primary opacity-20 blur-md animate-glow-pulse"></div>
           </div>
-          <span className="font-display text-2xl font-bold text-holographic">
-            VisuaLab
-          </span>
+          <span className="font-display text-xl font-bold text-holographic">VisuaLab</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-3 md:flex">
-          <NavLink href="/" label="Gallery" icon={GalleryHorizontal} />
+        {/* Navbar */}
+        <nav className="hidden md:flex items-center gap-1">
+          <NavLink href="/" label="Home" icon={GalleryHorizontal} />
+          <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
           <NavLink href="/albums" label="Albums" icon={FolderOpen} />
         </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden items-center gap-3 md:flex">
+        {/* Right actions */}
+        <div className="hidden items-center gap-2 md:flex">
           {role === 'ADMIN' && (
             <>
               <Link href="/upload" className="btn-holo primary group">
@@ -190,7 +201,8 @@ export default function SiteHeader() {
       {open && (
         <div className="md:hidden glass-strong border-t border-white/20">
           <div className="container flex flex-col gap-3 py-6">
-            <NavLink href="/" label="Gallery" icon={GalleryHorizontal} />
+            <NavLink href="/" label="Home" icon={GalleryHorizontal} />
+            <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
             <NavLink href="/albums" label="Albums" icon={FolderOpen} />
             
             {role === 'ADMIN' && (
@@ -233,7 +245,7 @@ export default function SiteHeader() {
         </div>
       )}
 
-      {/* Revolutionary Auth Modal */}
+  {/* Auth Modal */}
       {authOpen && (
         <div className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-void-black/60 backdrop-blur-sm p-4" onMouseDown={() => setAuthOpen(false)}>
           <div 

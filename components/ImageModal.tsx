@@ -1,21 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Download, Share2, Heart, ZoomIn, ZoomOut, RotateCw, Maximize } from 'lucide-react'
+import { X, Download, Share2, Heart, ZoomIn, ZoomOut, RotateCw, Maximize, MessageCircle, Send, LogIn } from 'lucide-react'
 
 interface ImageModalProps {
   src: string
   title?: string
   onClose: () => void
+  imageId?: string
 }
 
-export default function ImageModal({ src, title, onClose }: ImageModalProps) {
+export default function ImageModal({ src, title, onClose, imageId }: ImageModalProps) {
   const [scale, setScale] = useState(1)
   const [rotation, setRotation] = useState(0)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [likeState, setLikeState] = useState<{ count: number; likedByMe: boolean } | null>(null)
+  const [comments, setComments] = useState<Array<{ id: string; content: string; createdAt: string; user?: { id: string; username?: string } }>>([])
+  const [commentDraft, setCommentDraft] = useState('')
+  const role = useMemo(() => {
+    if (typeof document === 'undefined') return 'VIEWER'
+    const m = document.cookie.match(/(?:^|; )rbacRoleClient=([^;]+)/)
+    return m && decodeURIComponent(m[1]) === 'ADMIN' ? 'ADMIN' : 'VIEWER'
+  }, [])
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
@@ -33,6 +42,29 @@ export default function ImageModal({ src, title, onClose }: ImageModalProps) {
       document.body.style.overflow = 'unset'
     }
   }, [onClose])
+
+  // Load like count and comments when imageId is provided
+  useEffect(() => {
+    if (!imageId) return
+    ;(async () => {
+      try {
+        const [likesRes, commRes] = await Promise.all([
+          fetch(`/api/likes?imageId=${imageId}`),
+          fetch(`/api/comments?imageId=${imageId}`)
+        ])
+        if (likesRes.ok) setLikeState(await likesRes.json())
+        if (commRes.ok) {
+          const data = await commRes.json()
+          setComments(data.comments || [])
+        }
+      } catch {}
+    })()
+  }, [imageId])
+
+  function promptLogin(tab: 'login' | 'register' = 'login') {
+    if (typeof window === 'undefined') return
+    window.dispatchEvent(new CustomEvent('visuauth:open', { detail: { tab } }))
+  }
 
   const resetTransform = () => {
     setScale(1)
@@ -280,8 +312,24 @@ export default function ImageModal({ src, title, onClose }: ImageModalProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 title="Like"
+                onClick={async () => {
+                  if (!imageId) return
+                  // if not logged in (no username cookie), prompt login
+                  const u = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
+                  if (!u) {
+                    promptLogin('login')
+                    return
+                  }
+                  try {
+                    const res = await fetch('/api/likes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId }) })
+                    if (res.ok) setLikeState(await res.json())
+                  } catch {}
+                }}
               >
-                <Heart size={16} />
+                <div className={`inline-flex items-center gap-1 ${likeState?.likedByMe ? 'text-neon-pink' : ''}`}>
+                  <Heart size={16} />
+                  <span className="text-xs">{likeState?.count ?? 0}</span>
+                </div>
               </motion.button>
               
               <motion.button
@@ -302,8 +350,86 @@ export default function ImageModal({ src, title, onClose }: ImageModalProps) {
                 <Download size={16} />
                 <span>Download</span>
               </motion.button>
+              
+              {/* Comments trigger (scroll to comments) */}
+              {imageId && (
+                <a href="#image-modal-comments" className="btn-holo ghost" title="Comments">
+                  <MessageCircle size={16} />
+                </a>
+              )}
             </div>
           </motion.div>
+          
+          {/* Comments Section */}
+          {imageId && (
+            <motion.div 
+              id="image-modal-comments"
+              className="mt-3 glass-subtle rounded-2xl px-6 py-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-800 flex items-center gap-2"><MessageCircle size={16} /> Comments</h4>
+                <span className="text-xs text-gray-500">{comments.length}</span>
+              </div>
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {comments.length === 0 && (
+                  <div className="text-sm text-gray-500">No comments yet.</div>
+                )}
+                {comments.map(c => (
+                  <div key={c.id} className="text-sm">
+                    <span className="font-medium text-gray-800">{c.user?.username ?? 'User'}</span>
+                    <span className="text-gray-500 ml-2">{new Date(c.createdAt).toLocaleString()}</span>
+                    <p className="text-gray-700">{c.content}</p>
+                  </div>
+                ))}
+              </div>
+              <form
+                className="mt-3 flex items-center gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  const draft = commentDraft.trim()
+                  if (!draft) return
+                  const u = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
+                  if (!u) {
+                    promptLogin('login')
+                    return
+                  }
+                  // fetch challenge and submit
+                  try {
+                    const chal = await fetch('/api/maptcha').then(r => r.json())
+                    const answer = chal.a + chal.b
+                    const res = await fetch('/api/comments', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ imageId, content: draft, a: chal.a, b: chal.b, issued: chal.issued, sig: chal.sig, answer })
+                    })
+                    if (res.ok) {
+                      setCommentDraft('')
+                      const fresh = await fetch(`/api/comments?imageId=${imageId}`).then(r => r.json()).catch(() => null)
+                      if (fresh?.comments) setComments(fresh.comments)
+                    }
+                  } catch {}
+                }}
+              >
+                <input
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  placeholder={role === 'VIEWER' ? 'Write a comment (login required)' : 'Write a comment'}
+                  className="input-neural flex-1"
+                  maxLength={500}
+                />
+                <button className="btn-holo primary" type="submit">
+                  <Send size={16} />
+                </button>
+                {!document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/) && (
+                  <button type="button" className="btn-holo ghost" onClick={() => promptLogin('login')} title="Login">
+                    <LogIn size={16} />
+                  </button>
+                )}
+              </form>
+            </motion.div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
