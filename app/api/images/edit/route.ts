@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { id, ...data } = parsed.data
   const img = await prisma.image.findUnique({ where: { id }, select: { userId: true } })
   if (!img) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (!(role === 'ADMIN' || img.userId === userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!(role === 'ADMIN' || role === 'EDITOR' || img.userId === userId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const updated = await prisma.image.update({ where: { id }, data })
   return NextResponse.json({ image: updated })
 }
