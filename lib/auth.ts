@@ -12,8 +12,8 @@ export function canManageResource(role: Role, ownerId: string, userId?: string) 
   return !!userId && ownerId === userId
 }
 
-export function getRoleServer(): Role {
-  const cookieStore = cookies()
+export async function getRoleServer(): Promise<Role> {
+  const cookieStore = await cookies()
   const role = cookieStore.get('rbacRole')?.value
   return (role === 'ADMIN' ? 'ADMIN' : 'VIEWER') as Role
 }

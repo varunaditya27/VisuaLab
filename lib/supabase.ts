@@ -7,8 +7,8 @@ export const createSupabaseBrowser = () =>
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-export const createSupabaseServer = () => {
-  const cookieStore = cookies()
+export const createSupabaseServer = async () => {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
