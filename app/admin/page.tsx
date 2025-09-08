@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import UploadForm from '@/components/UploadForm'
-import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn } from 'lucide-react'
+import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn, Scissors } from 'lucide-react'
 
 type Album = { id: string; name: string; description?: string | null; _count?: { images: number } }
 type ImageLite = { id: string; title?: string | null; thumbUrl?: string | null }
@@ -30,11 +30,7 @@ export default function AdminPage() {
   const [analytics, setAnalytics] = useState<{ topViews: Array<{ id: string; count: number; thumbUrl?: string | null }>; topLikes: Array<{ id: string; count: number; thumbUrl?: string | null }> }>({ topViews: [], topLikes: [] })
   const [batchSelection, setBatchSelection] = useState<Record<string, boolean>>({})
   const [batchAlbum, setBatchAlbum] = useState<string>('')
-  const [editId, setEditId] = useState<string | null>(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editCaption, setEditCaption] = useState('')
-  const [editAlt, setEditAlt] = useState('')
-  const [editTags, setEditTags] = useState('')
+  // editor moved to /admin/editor
   const [loading, setLoading] = useState(false)
   const [creatingAlbum, setCreatingAlbum] = useState(false)
   const [albumName, setAlbumName] = useState('')
@@ -78,6 +74,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => { refreshAll() }, [])
+
+  // Editor moved to dedicated /admin/editor page
 
   async function createAlbum(e: React.FormEvent) {
     e.preventDefault()
@@ -171,10 +169,10 @@ export default function AdminPage() {
             <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
               {images.length === 0 && <p className="text-sm text-gray-500 col-span-3">No images yet.</p>}
               {images.map(img => (
-                <button key={img.id} className="block text-left" onClick={() => { setEditId(img.id); setEditTitle(img.title ?? ''); setEditCaption(''); setEditAlt(''); setEditTags('') }}>
+                <a key={img.id} className="block text-left" href={`/admin/editor?imageId=${encodeURIComponent(img.id)}`}>
                   <img src={img.thumbUrl ?? ''} alt={img.title ?? ''} className="w-full h-20 object-cover rounded-lg" />
                   <div className="mt-1 truncate text-xs text-gray-600">{img.title ?? 'Untitled'}</div>
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -191,12 +189,13 @@ export default function AdminPage() {
             <li>Storage: R2 signing with public fallback</li>
           </ul>
         </div>
-        <div className="card-quantum p-6">
+    <div className="card-quantum p-6">
           <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Shield size={18} /> Quick Links</h3>
           <div className="flex flex-wrap gap-2">
             <a className="btn-holo ghost" href="/gallery">Open Gallery</a>
             <a className="btn-holo ghost" href="/albums">Manage Albums</a>
             <a className="btn-holo ghost" href="/">Homepage</a>
+      <a className="btn-holo secondary inline-flex items-center gap-2" href="/admin/editor" title="Open the image editor"><Scissors size={16}/> Image Editor</a>
           </div>
         </div>
       </div>
@@ -260,36 +259,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Metadata Editor Drawer */}
-      {editId && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex" onMouseDown={() => setEditId(null)}>
-          <div className="ml-auto h-full w-full max-w-md card-quantum p-6" onMouseDown={(e) => e.stopPropagation()}>
-            <h3 className="font-heading text-lg mb-4">Edit Image</h3>
-            <form className="space-y-3" onSubmit={async (e) => {
-              e.preventDefault()
-              const updates = { id: editId, title: editTitle || undefined, caption: editCaption || undefined, altText: editAlt || undefined }
-              const res = await fetch('/api/images/edit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) })
-              if (res.ok) {
-                if (editTags.trim()) {
-                  const names = editTags.split(',').map(s => s.trim()).filter(Boolean)
-                  await fetch('/api/images/tags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId: editId, tagNames: names }) })
-                }
-                setEditId(null)
-                refreshAll()
-              }
-            }}>
-              <input className="input-neural w-full" placeholder="Title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-              <input className="input-neural w-full" placeholder="Caption" value={editCaption} onChange={(e) => setEditCaption(e.target.value)} />
-              <input className="input-neural w-full" placeholder="Alt text" value={editAlt} onChange={(e) => setEditAlt(e.target.value)} />
-              <input className="input-neural w-full" placeholder="Tags (comma separated)" value={editTags} onChange={(e) => setEditTags(e.target.value)} />
-              <div className="flex gap-2">
-                <button className="btn-holo primary">Save</button>
-                <button type="button" className="btn-holo ghost" onClick={() => setEditId(null)}>Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+  {/* Editor drawer removed; use /admin/editor instead */}
     </div>
   )
 }

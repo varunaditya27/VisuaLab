@@ -147,11 +147,15 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
                   <motion.img 
                     src={src} 
                     alt={img.title ?? 'Gallery image'} 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
                     loading="lazy"
                     initial={{ scale: 1.1, filter: 'blur(20px)' }}
                     animate={{ scale: 1, filter: 'blur(0px)' }}
                     transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+                    onClick={() => {
+                      if (!src) return
+                      setModal({ id: img.id, src, title: img.title ?? undefined })
+                    }}
                   />
                   
                   {/* Holographic Overlay */}
@@ -174,20 +178,7 @@ export function GalleryGrid({ images }: { images: ImageRec[] }) {
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        className="btn-holo ghost p-2"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        title="View"
-                        onClick={() => {
-                          if (!src) return
-                          setModal({ id: img.id, src, title: img.title ?? undefined })
-                        }}
-                      >
-                        <Eye size={16} />
-                      </motion.button>
-                      
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
                       <motion.button
                         className={`btn-holo ghost p-2 ${likeKey?.likedByMe ? 'text-neon-pink' : ''}`}
                         whileHover={{ scale: 1.1, rotate: -5 }}
