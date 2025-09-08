@@ -20,6 +20,8 @@ model User {
   albums    Album[]  @relation("AlbumOwner")
   likes     Like[]
   comments  Comment[]
+  views     ImageView[]
+  palettes  Palette[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -32,6 +34,7 @@ model Image {
   albumId     String?
   title       String?
   caption     String?
+  altText     String?
   mime        String
   width       Int
   height      Int
@@ -40,11 +43,15 @@ model Image {
   thumbKey    String?
   responsive  Json?
   exif        Json?
+  license     String?
+  attribution String?
+  privacy     Privacy  @default(PUBLIC)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   tags        ImageTag[]
   likes       Like[]
   comments    Comment[]
+  views       ImageView[]
 }
 
 model Album {
@@ -75,7 +82,14 @@ model ImageTag {
 
 enum Role {
   ADMIN
+  EDITOR
   VIEWER
+}
+
+enum Privacy {
+  PUBLIC
+  UNLISTED
+  PRIVATE
 }
 
 model Like {
@@ -96,4 +110,24 @@ model Comment {
   userId    String
   content   String
   createdAt DateTime @default(now())
+}
+
+model ImageView {
+  id        String   @id @default(cuid())
+  image     Image    @relation(fields: [imageId], references: [id])
+  imageId   String
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+model Palette {
+  id        String   @id @default(cuid())
+  name      String
+  json      Json
+  owner     User?    @relation(fields: [ownerId], references: [id])
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

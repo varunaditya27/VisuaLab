@@ -27,6 +27,9 @@ export async function r2GetSignedUrl(bucket: string, key: string) {
 }
 
 export function r2PublicUrl(key: string) {
+  // If key is already a full URL or an absolute path, return as-is
+  if (/^https?:\/\//i.test(key)) return key
+  if (key.startsWith('/')) return key
   const base = process.env.R2_PUBLIC_BASE_URL
   const bucket = process.env.R2_BUCKET
   const account = process.env.R2_ACCOUNT_ID
