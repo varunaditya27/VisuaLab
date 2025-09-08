@@ -12,11 +12,15 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
     <Link
       href={href}
       className={[
-        'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm transition-colors',
-        isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:text-ink hover:bg-gray-50',
+        'nav-item inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-300 magnetic',
+        'group hover:scale-105 hover:shadow-xl',
+        isActive 
+          ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl' 
+          : 'text-gray-700 hover:text-blue-500 hover:bg-white/20 backdrop-blur-sm',
       ].join(' ')}
     >
-      <Icon size={16} /> {label}
+      <Icon size={18} className="transition-transform duration-300 group-hover:rotate-12" /> 
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   )
 }
@@ -98,51 +102,75 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="rounded-xl bg-brand-600 p-2 text-white shadow-glow animate-float">
-            <Camera size={18} />
+    <header className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-heavy">
+      <div className="container flex h-20 items-center justify-between">
+        {/* Revolutionary Logo */}
+        <Link href="/" className="group flex items-center gap-3 transition-transform duration-300 hover:scale-105">
+          <div className="relative">
+            <div className="rounded-2xl bg-aurora-primary p-3 text-white shadow-aurora-glow animate-float group-hover:animate-glow-pulse">
+              <Camera size={24} className="transition-transform duration-300 group-hover:rotate-12" />
+            </div>
+            <div className="absolute inset-0 rounded-2xl bg-aurora-primary opacity-20 blur-md animate-glow-pulse"></div>
           </div>
-          <span className="font-display text-xl">VisuaLab</span>
+          <span className="font-display text-2xl font-bold text-holographic">
+            VisuaLab
+          </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-2 md:flex">
+        {/* Desktop Navigation */}
+        <nav className="hidden items-center gap-3 md:flex">
           <NavLink href="/" label="Gallery" icon={GalleryHorizontal} />
           <NavLink href="/albums" label="Albums" icon={FolderOpen} />
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        {/* Desktop Actions */}
+        <div className="hidden items-center gap-3 md:flex">
           {role === 'ADMIN' && (
             <>
-              <Link href="/upload" className="btn-primary inline-flex items-center gap-1">
-                <Upload size={16} /> Upload
+              <Link href="/upload" className="btn-holo primary group">
+                <Upload size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
+                <span>Upload</span>
               </Link>
-              <Link href="/admin" className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-brand-700 bg-brand-50">
-                <Shield size={16} /> Admin
+              <Link href="/admin" className="btn-holo secondary group">
+                <Shield size={18} className="transition-transform duration-300 group-hover:rotate-12" /> 
+                <span>Admin</span>
               </Link>
             </>
           )}
           
           {username ? (
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-2.5 py-1.5 text-sm text-brand-700">
-                <span className="text-xs text-gray-500">@</span>
-                <span className="font-medium">{username}</span>
-                <span className="rounded bg-brand-100 px-1 py-0.5 text-xs">{role}</span>
+            <div className="flex items-center gap-3">
+              <div className="glass-strong rounded-2xl px-4 py-2.5 transition-all duration-300 hover:shadow-aurora-glow">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-electric-blue">@</span>
+                  <span className="font-mono font-medium text-gray-700">{username}</span>
+                  <span className="rounded-full bg-aurora-primary px-2 py-0.5 text-xs text-white font-medium animate-glow-pulse">
+                    {role}
+                  </span>
+                </div>
               </div>
-              <button onClick={handleLogout} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-100">
-                <LogOut size={16} /> Logout
+              <button 
+                onClick={handleLogout} 
+                className="btn-holo ghost group"
+              >
+                <LogOut size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
+                <span>Logout</span>
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1">
-              <button onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-100">
-                <LogIn size={16} /> Login
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} 
+                className="btn-holo ghost group"
+              >
+                <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
+                <span>Login</span>
               </button>
-              <button onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-brand-700 hover:bg-brand-50">
-                Register
+              <button 
+                onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} 
+                className="btn-holo primary group"
+              >
+                <span>Join Lab</span>
               </button>
             </div>
           )}
@@ -151,47 +179,53 @@ export default function SiteHeader() {
         {/* Mobile menu button */}
         <button
           aria-label="Toggle menu"
-          className="md:hidden rounded-md p-2 text-gray-700 hover:bg-gray-100"
+          className="md:hidden btn-holo ghost p-3"
           onClick={() => setOpen((v) => !v)}
         >
-          {open ? <X size={20} /> : <Menu size={20} />}
+          {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile nav panel */}
+      {/* Mobile Navigation Panel */}
       {open && (
-        <div className="md:hidden border-t border-white/50 bg-white/80 backdrop-blur">
-          <div className="container flex flex-col gap-1 py-3">
+        <div className="md:hidden glass-strong border-t border-white/20">
+          <div className="container flex flex-col gap-3 py-6">
             <NavLink href="/" label="Gallery" icon={GalleryHorizontal} />
             <NavLink href="/albums" label="Albums" icon={FolderOpen} />
+            
             {role === 'ADMIN' && (
               <>
-                <Link href="/upload" className="btn-primary inline-flex items-center gap-1">
-                  <Upload size={16} /> Upload
+                <Link href="/upload" className="btn-holo primary">
+                  <Upload size={18} /> Upload
                 </Link>
-                <Link href="/admin" className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-brand-700 bg-brand-50">
-                  <Shield size={16} /> Admin
+                <Link href="/admin" className="btn-holo secondary">
+                  <Shield size={18} /> Admin
                 </Link>
               </>
             )}
+            
             {username ? (
-              <div className="flex flex-col gap-2">
-                <div className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-2.5 py-1.5 text-sm text-brand-700">
-                  <span className="text-xs text-gray-500">@</span>
-                  <span className="font-medium">{username}</span>
-                  <span className="rounded bg-brand-100 px-1 py-0.5 text-xs">{role}</span>
+              <div className="flex flex-col gap-3">
+                <div className="glass-strong rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-electric-blue">@</span>
+                    <span className="font-mono font-medium text-gray-700">{username}</span>
+                    <span className="rounded-full bg-aurora-primary px-2 py-1 text-xs text-white font-medium">
+                      {role}
+                    </span>
+                  </div>
                 </div>
-                <button onClick={handleLogout} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-100">
-                  <LogOut size={16} /> Logout
+                <button onClick={handleLogout} className="btn-holo ghost justify-start">
+                  <LogOut size={18} /> Logout
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1">
-                <button onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-100">
-                  <LogIn size={16} /> Login
+              <div className="flex flex-col gap-2">
+                <button onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} className="btn-holo ghost justify-start">
+                  <LogIn size={18} /> Login
                 </button>
-                <button onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm text-brand-700 hover:bg-brand-50">
-                  Register
+                <button onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} className="btn-holo primary justify-start">
+                  Join Lab
                 </button>
               </div>
             )}
@@ -199,25 +233,38 @@ export default function SiteHeader() {
         </div>
       )}
 
-      {/* Auth Modal */}
+      {/* Revolutionary Auth Modal */}
       {authOpen && (
-        <div className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-black/40 p-4" onMouseDown={() => setAuthOpen(false)}>
-          <div className="relative w-full max-w-sm my-auto rounded-xl border bg-white/95 p-6 shadow-xl backdrop-blur-sm" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-lg text-gray-900">Welcome</h2>
+        <div className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-void-black/60 backdrop-blur-sm p-4" onMouseDown={() => setAuthOpen(false)}>
+          <div 
+            className="card-quantum w-full max-w-md my-auto p-8 animate-cosmic-entrance" 
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="font-display text-2xl font-bold text-holographic">
+                Welcome to the Lab
+              </h2>
               <button 
                 onClick={() => setAuthOpen(false)} 
-                className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                className="btn-holo ghost p-2"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
+            
             <AuthTabs initialTab={authInitialTab} onLogin={handleLogin} onRegister={handleRegister} />
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              <p className="text-center text-xs text-gray-500 mb-1">Demo Admin Account:</p>
-              <div className="text-center text-xs text-gray-600 space-y-0.5">
-                <div>Username: <span className="font-mono font-medium text-gray-800">CloneFest2025</span></div>
-                <div>Password: <span className="font-mono font-medium text-gray-800">CloneFest2025</span></div>
+            
+            <div className="mt-6 border-t border-white/20 pt-6">
+              <p className="text-center text-xs text-gray-500 mb-3">✨ Demo Admin Portal:</p>
+              <div className="glass-subtle rounded-xl p-4 text-center text-xs space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Username:</span>
+                  <span className="font-mono font-medium text-electric-blue">CloneFest2025</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Password:</span>
+                  <span className="font-mono font-medium text-neon-pink">CloneFest2025</span>
+                </div>
               </div>
             </div>
           </div>
@@ -227,11 +274,12 @@ export default function SiteHeader() {
   )
 }
 
-function AuthForm({ onSubmit, cta = 'Sign in' }: { onSubmit: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; cta?: string }) {
+function AuthForm({ onSubmit, cta = 'Enter Lab' }: { onSubmit: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; cta?: string }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -240,49 +288,83 @@ function AuthForm({ onSubmit, cta = 'Sign in' }: { onSubmit: (u: string, p: stri
     if (!res.ok) setError(res.message || 'Something went wrong')
     setLoading(false)
   }
+  
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700">Username</label>
+        <label className="mb-2 block text-sm font-medium text-gray-700">Username</label>
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-200"
-          placeholder="Enter username"
+          className="input-neural w-full"
+          placeholder="Enter your username"
           autoComplete="username"
           required
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700">Password</label>
+        <label className="mb-2 block text-sm font-medium text-gray-700">Password</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-200"
-          placeholder="Enter password"
-          autoComplete={cta === 'Register' ? 'new-password' : 'current-password'}
+          className="input-neural w-full"
+          placeholder="Enter your password"
+          autoComplete={cta === 'Join Lab' ? 'new-password' : 'current-password'}
           required
         />
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      <button disabled={loading} className="btn-primary w-full justify-center disabled:opacity-60">{loading ? `${cta}…` : cta}</button>
+      {error && (
+        <div className="glass-subtle rounded-xl p-3 border border-red-300">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+      <button 
+        disabled={loading} 
+        className="btn-holo primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? `${cta}...` : cta}
+      </button>
     </form>
   )
 }
 
-function AuthTabs({ initialTab = 'login', onLogin, onRegister }: { initialTab?: 'login' | 'register'; onLogin: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; onRegister: (u: string, p: string) => Promise<{ ok: boolean; message?: string }> }) {
+function AuthTabs({ initialTab = 'login', onLogin, onRegister }: { 
+  initialTab?: 'login' | 'register'; 
+  onLogin: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; 
+  onRegister: (u: string, p: string) => Promise<{ ok: boolean; message?: string }> 
+}) {
   const [tab, setTab] = useState<'login' | 'register'>(initialTab)
+  
   return (
     <div>
-      <div className="mb-4 grid grid-cols-2 rounded-lg border bg-white/60 p-1 text-sm">
-        <button onClick={() => setTab('login')} className={`rounded-md px-3 py-1.5 transition ${tab === 'login' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>Login</button>
-        <button onClick={() => setTab('register')} className={`rounded-md px-3 py-1.5 transition ${tab === 'register' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>Register</button>
+      <div className="mb-6 grid grid-cols-2 gap-2 glass-subtle rounded-2xl p-2">
+        <button 
+          onClick={() => setTab('login')} 
+          className={`rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
+            tab === 'login' 
+              ? 'bg-aurora-primary text-white shadow-aurora-glow' 
+              : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'
+          }`}
+        >
+          Sign In
+        </button>
+        <button 
+          onClick={() => setTab('register')} 
+          className={`rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
+            tab === 'register' 
+              ? 'bg-aurora-primary text-white shadow-aurora-glow' 
+              : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'
+          }`}
+        >
+          Join Lab
+        </button>
       </div>
+      
       {tab === 'login' ? (
-        <AuthForm onSubmit={onLogin} cta="Sign in" />
+        <AuthForm onSubmit={onLogin} cta="Enter Lab" />
       ) : (
-        <AuthForm onSubmit={onRegister} cta="Register" />
+        <AuthForm onSubmit={onRegister} cta="Join Lab" />
       )}
     </div>
   )
