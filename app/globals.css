@@ -91,6 +91,8 @@ body {
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: xor;
   padding: 1px;
+  /* Ensure the decorative overlay never blocks clicks inside cards (e.g., editor toolbar/canvas) */
+  pointer-events: none;
 }
 
 .card-quantum:hover::before {
@@ -277,4 +279,40 @@ body {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+/* Toast UI editor clickability guard */
+.tui-image-editor, .tui-image-editor-container, .tui-image-editor-main { position: relative; z-index: 10; }
+.tui-image-editor * { pointer-events: auto; }
+
+/* Editor shell */
+.editor-card {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+  padding: 0; /* remove inner padding to avoid UI squish */
+}
+.editor-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.editor-card .tui-image-editor-container {
+  width: 100% !important;
+  height: min(78vh, 820px) !important;
+}
+.tui-image-editor-container .tui-image-editor-main {
+  height: calc(100% - 48px) !important; /* account for header */
+}
+.tui-image-editor-menu { flex-wrap: wrap; }
+.tui-image-editor-header-logo { display: none; }
+.tui-image-editor-header-buttons { gap: 8px; }
+.tui-image-editor-controls { max-height: 40vh; overflow: auto; }
+
+@media (max-width: 1024px) {
+  .editor-card .tui-image-editor-container { height: min(70vh, 720px) !important; }
 }
