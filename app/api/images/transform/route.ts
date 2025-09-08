@@ -71,8 +71,8 @@ export async function POST(req: Request) {
   if (flip) pipeline = pipeline.flip()
   if (flop) pipeline = pipeline.flop()
 
-  // Smart crop to ratio without scaling beyond original
-  if (smartCrop) {
+  // Smart crop to ratio without scaling beyond original (only if no manual crop provided)
+  if (smartCrop && !crop) {
     const [rw, rh] = smartCrop.ratio.split(':').map(Number)
     const targetRatio = rw / rh
     let cropW = origW
@@ -87,11 +87,22 @@ export async function POST(req: Request) {
   }
 
   if (crop) {
-    const left = Math.max(0, Math.min(origW - 1, Math.round(crop.x)))
-    const top = Math.max(0, Math.min(origH - 1, Math.round(crop.y)))
-    const width = Math.max(1, Math.min(origW - left, Math.round(crop.width)))
-    const height = Math.max(1, Math.min(origH - top, Math.round(crop.height)))
-    pipeline = pipeline.extract({ left, top, width, height })
+    // Use current pipeline dimensions after prior transforms (rotate/flip/smartCrop)
+    const curMeta = await pipeline.metadata()
+    const curW = curMeta.width || origW
+    const curH = curMeta.height || origH
+    const left = Math.max(0, Math.min(curW - 1, Math.round(crop.x)))
+    const top = Math.max(0, Math.min(curH - 1, Math.round(crop.y)))
+    const width = Math.max(1, Math.min(curW - left, Math.round(crop.width)))
+    const height = Math.max(1, Math.min(curH - top, Math.round(crop.height)))
+    if (width <= 0 || height <= 0) {
+      return NextResponse.json({ error: 'Invalid crop area' }, { status: 400 })
+    }
+    try {
+      pipeline = pipeline.extract({ left, top, width, height })
+    } catch {
+      return NextResponse.json({ error: 'Invalid crop area' }, { status: 400 })
+    }
   }
 
   if (resize && (resize.width || resize.height)) {
@@ -107,7 +118,7 @@ export async function POST(req: Request) {
   // If preview mode: render a smaller JPEG and return, without persisting
   if (preview) {
     const maxW = previewMaxWidth || 800
-    let p = pipeline
+  let p = pipeline.clone()
     // Ensure preview isn't too large
     p = p.resize({ width: maxW, withoutEnlargement: true })
     const buf = await p.jpeg({ quality: 80 }).toBuffer()

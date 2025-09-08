@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { RotateCw, FlipHorizontal, FlipVertical, Crop as CropIcon, SlidersHorizontal, Sparkles, Scissors, ArrowLeft, Wand2, Undo2, Redo2, ZoomIn, ZoomOut, Maximize2, LayoutGrid, SplitSquareHorizontal, BadgePlus } from 'lucide-react'
+import { RotateCw, RotateCcw, FlipHorizontal, FlipVertical, Crop as CropIcon, SlidersHorizontal, Sparkles, Scissors, ArrowLeft, Wand2, Undo2, Redo2, ZoomIn, ZoomOut, Maximize2, LayoutGrid, SplitSquareHorizontal, BadgePlus, X } from 'lucide-react'
 
 type ImageLite = { id: string; title?: string | null; thumbUrl?: string | null }
 
@@ -19,7 +19,6 @@ export default function AdminEditorPage() {
   const [pan, setPan] = useState<{x:number;y:number}>({x:0,y:0})
   const [panMode, setPanMode] = useState(false)
   const [showCompare, setShowCompare] = useState(false)
-  const [comparePos, setComparePos] = useState(0.5)
   const [drawCropMode, setDrawCropMode] = useState(false)
   const [drawing, setDrawing] = useState<{startX:number;startY:number;endX:number;endY:number}|null>(null)
   const [naturalSize, setNaturalSize] = useState<{w:number;h:number}>({w:0,h:0})
@@ -98,8 +97,7 @@ export default function AdminEditorPage() {
         // reset view and ops when switching image
         setZoom(1)
         setPan({x:0,y:0})
-        setComparePos(0.5)
-        setShowCompare(false)
+  setShowCompare(false)
         resetPending()
         setHistory([])
         setHistIndex(-1)
@@ -296,7 +294,28 @@ export default function AdminEditorPage() {
     
     if (drawing) {
       const rect = stageRef.current.getBoundingClientRect()
-      setDrawing(d => d ? ({...d, endX: e.clientX - rect.left, endY: e.clientY - rect.top}) : d)
+      const sx = drawing.startX
+      const sy = drawing.startY
+      let ex = e.clientX - rect.left
+      let ey = e.clientY - rect.top
+
+      // Optional aspect ratio lock
+      if (smartRatio) {
+        const [rw, rh] = smartRatio.split(':').map(Number)
+        const ratio = rw / rh
+        const dx = ex - sx
+        const signX = Math.sign(dx) || 1
+        const width = Math.abs(dx)
+        const height = width / ratio
+        const signY = Math.sign(ey - sy) || 1
+        ey = sy + signY * height
+      }
+
+      // Clamp to stage bounds
+      ex = Math.max(0, Math.min(rect.width, ex))
+      ey = Math.max(0, Math.min(rect.height, ey))
+      
+      setDrawing({ startX: sx, startY: sy, endX: ex, endY: ey })
     } else if (isDragging && panMode) {
       const newX = e.clientX - dragStart.x
       const newY = e.clientY - dragStart.y
@@ -333,8 +352,9 @@ export default function AdminEditorPage() {
       const pw = Math.max(1, Math.round(relW * naturalSize.w))
       const ph = Math.max(1, Math.round(relH * naturalSize.h))
       
-      setCrop({ x: px, y: py, width: pw, height: ph })
+  setCrop({ x: px, y: py, width: pw, height: ph })
       setDrawing(null)
+  setDrawCropMode(false)
     }
     setIsDragging(false)
   }
@@ -425,8 +445,8 @@ export default function AdminEditorPage() {
                 </button>
                 <button 
                   className={`btn-holo ${showCompare?'secondary':'ghost'}`} 
-                  onClick={() => setShowCompare(v => !v)} 
-                  title="Before/After Compare"
+                  onClick={() => setShowCompare(true)} 
+                  title="Open side-by-side compare"
                 >
                   <SplitSquareHorizontal size={16}/>
                 </button>
@@ -454,7 +474,7 @@ export default function AdminEditorPage() {
                   {/* Base image with instant client-side transforms */}
                   <img 
                     ref={imgRef} 
-                    src={showCompare && basePreview ? basePreview : preview} 
+                    src={preview} 
                     alt="Preview" 
                     className="object-contain rounded select-none transition-transform duration-75 ease-out" 
                     draggable={false}
@@ -470,41 +490,6 @@ export default function AdminEditorPage() {
                     }} 
                   />
                   
-                  {/* Compare overlay */}
-                  {showCompare && basePreview && preview !== basePreview && (
-                    <div 
-                      className="absolute inset-0 pointer-events-none" 
-                      style={{ clipPath: `inset(0 ${Math.round((1-comparePos)*100)}% 0 0)` }}
-                    >
-                      <img 
-                        src={preview} 
-                        alt="After" 
-                        className="object-contain rounded transition-transform duration-75 ease-out" 
-                        style={{ 
-                          transform: clientTransform,
-                          maxHeight: '28rem', 
-                          width: '100%',
-                          filter: enhance.saturation ? `saturate(${enhance.saturation})` : undefined
-                        }} 
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Compare slider */}
-                  {showCompare && (
-                    <div className="absolute inset-y-2 left-4 right-4 flex items-center pointer-events-auto">
-                      <input 
-                        type="range" 
-                        min={0} 
-                        max={1} 
-                        step={0.01} 
-                        value={comparePos} 
-                        onChange={(e) => setComparePos(parseFloat(e.target.value))} 
-                        className="w-full opacity-80 hover:opacity-100 transition-opacity" 
-                      />
-                    </div>
-                  )}
-                  
                   {/* Crop overlay */}
                   {drawCropMode && drawing && (
                     <div 
@@ -519,11 +504,19 @@ export default function AdminEditorPage() {
                   )}
                   
                   {/* Crop indicator when crop is set */}
-                  {crop && !drawCropMode && imgRef.current && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="absolute border border-neon-pink/60 bg-neon-pink/5" />
-                    </div>
-                  )}
+                  {crop && !drawCropMode && imgRef.current && stageRef.current && (() => {
+                    const rect = stageRef.current!.getBoundingClientRect()
+                    const imgRect = imgRef.current!.getBoundingClientRect()
+                    const left = imgRect.left - rect.left + (crop.x / naturalSize.w) * imgRect.width
+                    const top = imgRect.top - rect.top + (crop.y / naturalSize.h) * imgRect.height
+                    const width = (crop.width / naturalSize.w) * imgRect.width
+                    const height = (crop.height / naturalSize.h) * imgRect.height
+                    return (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute border-2 border-electric-blue/70 bg-electric-blue/10" style={{ left, top, width, height }} />
+                      </div>
+                    )
+                  })()}
                 </div>
               ) : (
                 <div className="text-sm text-gray-500">
@@ -532,6 +525,44 @@ export default function AdminEditorPage() {
               )}
             </div>
           </div>
+
+          {/* Side-by-side Compare Modal */}
+          {showCompare && basePreview && preview && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowCompare(false)} />
+              <div className="relative card-quantum p-4 w-[95vw] max-w-5xl max-h-[90vh] overflow-auto">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-heading text-lg flex items-center gap-2"><SplitSquareHorizontal size={18}/> Compare</h3>
+                  <button className="btn-holo ghost" onClick={() => setShowCompare(false)} title="Close">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="glass-subtle rounded-2xl p-2 flex items-center justify-center relative">
+                    <div className="text-xs text-gray-500 absolute top-2 left-2">Before</div>
+                    <img 
+                      src={basePreview} 
+                      alt="Before" 
+                      className="object-contain rounded select-none" 
+                      style={{ maxHeight: '70vh', width: '100%', transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="glass-subtle rounded-2xl p-2 flex items-center justify-center relative">
+                    <div className="text-xs text-gray-500 absolute top-2 left-2">After</div>
+                    <img 
+                      src={preview} 
+                      alt="After" 
+                      className="object-contain rounded select-none" 
+                      style={{ maxHeight: '70vh', width: '100%', transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+                      draggable={false}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">Zoom and pan are mirrored between panes. Click outside to close.</div>
+              </div>
+            </div>
+          )}
 
           <div className="card-quantum p-4">
             <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><SlidersHorizontal size={18}/> Controls</h3>
@@ -542,18 +573,18 @@ export default function AdminEditorPage() {
                   <RotateCw size={16}/> Orientation
                 </h4>
                 <div className="flex items-center gap-2 mb-2">
-                  <button className="btn-holo ghost" onClick={() => setRotate(r => r + 90)} title="Rotate +90° (R)">
-                    +90°
+                  <button className="btn-holo ghost" onClick={() => setRotate(r => r + 90)} title="Rotate clockwise (R)">
+                    <RotateCw size={16} />
                   </button>
-                  <button className="btn-holo ghost" onClick={() => setRotate(r => r - 90)} title="Rotate -90° (Shift+R)">
-                    -90°
+                  <button className="btn-holo ghost" onClick={() => setRotate(r => r - 90)} title="Rotate counter‑clockwise (Shift+R)">
+                    <RotateCcw size={16} />
                   </button>
                   <input 
                     type="number" 
                     className="input-neural w-20" 
                     value={rotate} 
                     onChange={(e) => setRotate(parseInt(e.target.value||'0'))}
-                    title="Exact rotation angle"
+                    title="Exact rotation angle in degrees"
                   />
                   <span className="text-xs text-gray-500">°</span>
                 </div>
@@ -561,14 +592,14 @@ export default function AdminEditorPage() {
                   <button 
                     className={`btn-holo ${flip ? 'secondary' : 'ghost'}`} 
                     onClick={() => setFlip(v => !v)}
-                    title="Flip Vertical (F)"
+                    title="Flip vertically (F)"
                   >
                     <FlipVertical size={16}/> Flip
                   </button>
                   <button 
                     className={`btn-holo ${flop ? 'secondary' : 'ghost'}`} 
                     onClick={() => setFlop(v => !v)}
-                    title="Mirror Horizontal (M)"
+                    title="Mirror horizontally (M)"
                   >
                     <FlipHorizontal size={16}/> Mirror
                   </button>
@@ -580,54 +611,38 @@ export default function AdminEditorPage() {
                 <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
                   <CropIcon size={16}/> Crop
                 </h4>
-                <div className="mb-2">
-                  <label className="text-xs text-gray-600 mr-2">Smart ratio</label>
+                <div className="mb-2 flex items-center gap-2">
+                  <label className="text-xs text-gray-600">Aspect</label>
                   <select 
                     className="input-neural" 
                     value={smartRatio} 
                     onChange={(e) => setSmartRatio((e.target.value as any) || '')}
+                    title="Optional: lock crop to a preset aspect ratio"
                   >
-                    <option value="">None</option>
+                    <option value="">Free</option>
                     <option value="1:1">Square (1:1)</option>
                     <option value="4:3">Standard (4:3)</option>
                     <option value="3:2">Photo (3:2)</option>
                     <option value="16:9">Widescreen (16:9)</option>
                   </select>
+                  <button 
+                    className={`btn-holo ${drawCropMode?'secondary':'ghost'}`} 
+                    onClick={() => setDrawCropMode(v => !v)}
+                    title="Enable crop mode and drag on the image"
+                  >
+                    Start Crop
+                  </button>
+                  <button 
+                    className="btn-holo ghost"
+                    onClick={() => setCrop(null)}
+                    title="Clear current crop selection"
+                  >
+                    Clear
+                  </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2 mb-2">
-                  <input 
-                    className="input-neural" 
-                    type="number" 
-                    placeholder="x" 
-                    value={crop?.x ?? ''} 
-                    onChange={(e) => setCrop(c => ({ ...(c||{x:0,y:0,width:100,height:100}), x: parseInt(e.target.value||'0') }))} 
-                  />
-                  <input 
-                    className="input-neural" 
-                    type="number" 
-                    placeholder="y" 
-                    value={crop?.y ?? ''} 
-                    onChange={(e) => setCrop(c => ({ ...(c||{x:0,y:0,width:100,height:100}), y: parseInt(e.target.value||'0') }))} 
-                  />
-                  <input 
-                    className="input-neural" 
-                    type="number" 
-                    placeholder="width" 
-                    value={crop?.width ?? ''} 
-                    onChange={(e) => setCrop(c => ({ ...(c||{x:0,y:0,width:100,height:100}), width: parseInt(e.target.value||'0') }))} 
-                  />
-                  <input 
-                    className="input-neural" 
-                    type="number" 
-                    placeholder="height" 
-                    value={crop?.height ?? ''} 
-                    onChange={(e) => setCrop(c => ({ ...(c||{x:0,y:0,width:100,height:100}), height: parseInt(e.target.value||'0') }))} 
-                  />
-                </div>
+                <div className="text-xs text-gray-500">Tip: Click and drag on the image to select the area to keep. Use the Aspect menu to constrain the shape.</div>
                 {crop && (
-                  <div className="text-xs text-gray-500">
-                    Crop: {crop.width}×{crop.height}px at ({crop.x}, {crop.y})
-                  </div>
+                  <div className="mt-1 text-xs text-gray-500">Selected: {crop.width}×{crop.height}px</div>
                 )}
               </div>
 
@@ -635,9 +650,9 @@ export default function AdminEditorPage() {
               <div className="glass-subtle rounded-2xl p-4">
                 <h4 className="font-medium text-gray-800 mb-2">Resize</h4>
                 <div className="grid grid-cols-3 gap-2 mb-2">
-                  <input className="input-neural" type="number" placeholder="width" value={resize.width ?? ''} onChange={(e) => setResize(r => ({ ...r, width: e.target.value ? parseInt(e.target.value) : undefined }))} />
-                  <input className="input-neural" type="number" placeholder="height" value={resize.height ?? ''} onChange={(e) => setResize(r => ({ ...r, height: e.target.value ? parseInt(e.target.value) : undefined }))} />
-                  <select className="input-neural" value={resize.fit ?? ''} onChange={(e) => setResize(r => ({ ...r, fit: (e.target.value || undefined) as any }))}>
+                  <input className="input-neural" type="number" placeholder="width" title="Target width in pixels (leave blank to auto)" value={resize.width ?? ''} onChange={(e) => setResize(r => ({ ...r, width: e.target.value ? parseInt(e.target.value) : undefined }))} />
+                  <input className="input-neural" type="number" placeholder="height" title="Target height in pixels (leave blank to auto)" value={resize.height ?? ''} onChange={(e) => setResize(r => ({ ...r, height: e.target.value ? parseInt(e.target.value) : undefined }))} />
+                  <select className="input-neural" title="How the image fits within the box when both width and height are set" value={resize.fit ?? ''} onChange={(e) => setResize(r => ({ ...r, fit: (e.target.value || undefined) as any }))}>
                     <option value="">fit: inside (default)</option>
                     <option value="cover">cover</option>
                     <option value="contain">contain</option>
@@ -645,18 +660,22 @@ export default function AdminEditorPage() {
                     <option value="outside">outside</option>
                   </select>
                 </div>
-                <div className="text-xs text-gray-500">Leave width/height blank to auto-compute by aspect ratio.</div>
+                <div className="text-xs text-gray-500">Tip: Leave width/height blank to keep aspect ratio. "Inside" avoids upscaling beyond the original.</div>
               </div>
 
               {/* Enhance */}
               <div className="glass-subtle rounded-2xl p-4">
                 <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2"><Sparkles size={16}/> Enhance</h4>
-                <div className="flex items-center gap-2 mb-2">
-                  <label className="inline-flex items-center gap-2"><input type="checkbox" checked={!!enhance.normalize} onChange={(e) => setEnhance(v => ({ ...v, normalize: e.target.checked || undefined }))} /> Normalize</label>
-                  <label className="inline-flex items-center gap-2"><input type="checkbox" checked={!!enhance.sharpen} onChange={(e) => setEnhance(v => ({ ...v, sharpen: e.target.checked || undefined }))} /> Sharpen</label>
+                <div className="flex items-center gap-4 mb-2">
+                  <label className="inline-flex items-center gap-2" title="Normalize: even out lighting/contrast">
+                    <input type="checkbox" checked={!!enhance.normalize} onChange={(e) => setEnhance(v => ({ ...v, normalize: e.target.checked || undefined }))} /> Normalize
+                  </label>
+                  <label className="inline-flex items-center gap-2" title="Sharpen: enhance edges subtly">
+                    <input type="checkbox" checked={!!enhance.sharpen} onChange={(e) => setEnhance(v => ({ ...v, sharpen: e.target.checked || undefined }))} /> Sharpen
+                  </label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-600">Saturation</label>
+                  <label className="text-xs text-gray-600" title="Color intensity (0.1 to 3)">Saturation</label>
                   <input type="range" min={0.1} max={3} step={0.1} value={enhance.saturation ?? 1} onChange={(e) => setEnhance(v => ({ ...v, saturation: parseFloat(e.target.value) }))} />
                   <input type="number" className="input-neural w-20" value={enhance.saturation ?? 1} step={0.1} min={0.1} max={3} onChange={(e) => setEnhance(v => ({ ...v, saturation: parseFloat(e.target.value||'1') }))} />
                 </div>
