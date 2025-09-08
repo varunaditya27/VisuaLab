@@ -2,22 +2,279 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Aurora Spectrum CSS Variables */
 :root {
   --bg: 255 255 255;
   --fg: 11 16 32;
+  
+  /* Aurora Spectrum Colors */
+  --electric-blue: #00d4ff;
+  --cyber-purple: #8b5cf6;
+  --neon-pink: #f471b5;
+  --plasma-green: #10b981;
+  --solar-orange: #f59e0b;
+  --cosmic-violet: #7c3aed;
+  --void-black: #0a0a0f;
+  --space-gray: #1a1a2e;
 }
 
-html, body, #__next { height: 100%; }
+/* Dark mode variables */
+.dark {
+  --bg: 10 10 15;
+  --fg: 255 255 255;
+}
+
+html, body, #__next { 
+  height: 100%; 
+}
 
 body {
   color: rgb(var(--fg));
   background: rgb(var(--bg));
+  background-image: 
+    radial-gradient(at 40% 20%, rgba(0, 212, 255, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(244, 113, 181, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(124, 58, 237, 0.03) 0px, transparent 50%);
+  animation: aurora-shift 30s ease-in-out infinite;
 }
 
+/* Revolutionary Component System */
+
+/* HoloButtons */
+.btn-holo {
+  @apply relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-medium transition-all duration-300;
+  @apply bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10;
+  @apply border border-white/20 backdrop-blur-sm shadow-lg;
+  @apply hover:scale-[1.02] hover:shadow-xl active:scale-[0.98];
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50;
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+.btn-holo:hover {
+  @apply text-white;
+  background-image: linear-gradient(135deg, var(--electric-blue), var(--cyber-purple), var(--neon-pink));
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.4), 0 0 60px rgba(139, 92, 246, 0.3);
+}
+
+.btn-holo.primary {
+  @apply bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl;
+}
+
+.btn-holo.secondary {
+  @apply bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 text-white shadow-xl;
+}
+
+.btn-holo.ghost {
+  @apply bg-white/10 border-white/30 text-gray-700 hover:text-white;
+}
+
+/* Quantum Cards */
+.card-quantum {
+  @apply relative rounded-3xl backdrop-blur-sm transition-all duration-500;
+  @apply bg-gradient-to-br from-white/10 via-white/5 to-transparent;
+  @apply border border-white/20 shadow-lg;
+  @apply hover:scale-[1.02] hover:rotate-1 hover:shadow-xl;
+  background-image: 
+    linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%),
+    linear-gradient(225deg, rgba(0,212,255,0.05) 0%, transparent 50%),
+    linear-gradient(315deg, rgba(139,92,246,0.05) 0%, transparent 50%);
+}
+
+.card-quantum::before {
+  content: '';
+  @apply absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500;
+  background: linear-gradient(135deg, var(--electric-blue), var(--cyber-purple), var(--neon-pink));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  padding: 1px;
+}
+
+.card-quantum:hover::before {
+  @apply opacity-50;
+}
+
+/* Neural Inputs */
+.input-neural {
+  @apply relative block w-full rounded-2xl border-0 px-4 py-3 transition-all duration-300;
+  @apply bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm;
+  @apply border border-white/20 text-gray-900 placeholder-gray-500;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50;
+  @apply hover:shadow-xl focus:shadow-lg;
+}
+
+.input-neural:focus {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1));
+  border-color: var(--electric-blue);
+}
+
+/* Galaxy Grid System */
+.galaxy-grid {
+  @apply grid gap-6 transition-all duration-500;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.galaxy-grid-item {
+  @apply relative overflow-hidden rounded-2xl transition-all duration-300;
+  @apply hover:scale-105 hover:rotate-2 hover:z-10 cursor-pointer;
+}
+
+.galaxy-grid-item img {
+  @apply transition-transform duration-500 group-hover:scale-110;
+}
+
+/* Aurora Backgrounds */
+.aurora-bg {
+  @apply relative;
+  background: linear-gradient(-45deg, #00d4ff, #8b5cf6, #f471b5, #10b981);
+  background-size: 400% 400%;
+  animation: aurora-shift 15s ease infinite;
+}
+
+.aurora-bg::before {
+  content: '';
+  @apply absolute inset-0 opacity-30;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: particle-float 12s ease-in-out infinite;
+}
+
+/* Floating Navigation */
+.nav-floating {
+  @apply fixed top-4 left-1/2 transform -translate-x-1/2 z-50;
+  @apply bg-white/10 backdrop-blur-heavy border border-white/20;
+  @apply rounded-full px-6 py-3 shadow-lg;
+}
+
+.nav-floating .nav-item {
+  @apply relative px-4 py-2 rounded-full transition-all duration-300;
+  @apply hover:bg-white/20 hover:text-blue-500;
+}
+
+.nav-floating .nav-item.active {
+  @apply bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl;
+}
+
+/* Holographic Text Effects */
+.text-holographic {
+  background: linear-gradient(135deg, var(--electric-blue), var(--cyber-purple), var(--neon-pink));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-x 3s ease infinite;
+}
+
+.text-glow {
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+}
+
+/* Glass morphism utilities */
+.glass {
+  @apply bg-white/10 backdrop-blur-sm border border-white/20;
+}
+
+.glass-strong {
+  @apply bg-white/20 backdrop-blur-heavy border border-white/30;
+}
+
+.glass-subtle {
+  @apply bg-white/5 backdrop-blur-sm border border-white/10;
+}
+
+/* Particle effects */
+.particles {
+  @apply relative overflow-hidden;
+}
+
+.particles::before {
+  content: '';
+  @apply absolute inset-0 opacity-30;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(244, 113, 181, 0.2) 0%, transparent 50%);
+  animation: particle-float 8s ease-in-out infinite;
+}
+
+/* Magnetic hover effects */
+.magnetic {
+  @apply transition-transform duration-200 ease-out;
+}
+
+.magnetic:hover {
+  animation: magnetic-hover 200ms ease-out forwards;
+}
+
+/* Legacy classes for backward compatibility */
 .btn-primary {
-  @apply inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white shadow-glow transition hover:bg-brand-700 active:scale-[0.99];
+  @apply btn-holo primary;
 }
 
 .card {
-  @apply rounded-xl border bg-white/60 backdrop-blur-sm shadow-sm transition hover:shadow-glow;
+  @apply card-quantum;
+}
+
+/* Responsive design enhancements */
+@media (max-width: 768px) {
+  .galaxy-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    @apply gap-4;
+  }
+  
+  .card-quantum {
+    @apply rounded-2xl;
+  }
+  
+  .btn-holo {
+    @apply rounded-xl px-4 py-2;
+  }
+}
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .btn-holo {
+    @apply border-2 border-black text-black;
+  }
+  
+  .card-quantum {
+    @apply border-2 border-gray-300 bg-white;
+  }
+  
+  .text-holographic {
+    @apply text-black;
+    -webkit-text-fill-color: black;
+  }
+}
+
+/* Focus visible improvements */
+.btn-holo:focus-visible,
+.input-neural:focus-visible,
+.card-quantum:focus-visible {
+  @apply outline-2 outline-blue-500 outline-offset-2;
+}
+
+/* Loading animations */
+.loading-shimmer {
+  background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
