@@ -17,13 +17,15 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [displaySrc, setDisplaySrc] = useState(src)
   const [likeState, setLikeState] = useState<{ count: number; likedByMe: boolean } | null>(null)
   const [comments, setComments] = useState<Array<{ id: string; content: string; createdAt: string; user?: { id: string; username?: string } }>>([])
   const [commentDraft, setCommentDraft] = useState('')
   const role = useMemo(() => {
     if (typeof document === 'undefined') return 'VIEWER'
     const m = document.cookie.match(/(?:^|; )rbacRoleClient=([^;]+)/)
-    return m && decodeURIComponent(m[1]) === 'ADMIN' ? 'ADMIN' : 'VIEWER'
+    const r = m ? decodeURIComponent(m[1]) : 'VIEWER'
+    return (r === 'ADMIN' || r === 'EDITOR') ? r : 'VIEWER'
   }, [])
 
   useEffect(() => {
@@ -43,6 +45,10 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
     }
   }, [onClose])
 
+  useEffect(() => {
+    setDisplaySrc(src)
+  }, [src])
+
   // Load like count and comments when imageId is provided
   useEffect(() => {
     if (!imageId) return
@@ -59,6 +65,8 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
         }
       } catch {}
     })()
+  // Log a view (fire-and-forget)
+  fetch('/api/views', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId }) }).catch(() => {})
   }, [imageId])
 
   function promptLogin(tab: 'login' | 'register' = 'login') {
@@ -256,7 +264,7 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
             )}
 
             <motion.img
-              src={src}
+              src={displaySrc}
               alt={title || "Modal image"}
               className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"
               onLoad={() => setIsLoaded(true)}
@@ -292,6 +300,8 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
               />
             )}
           </motion.div>
+
+          {/* Editor Panel removed: dedicated /admin/editor now handles editing */}
 
           {/* Footer Actions */}
           <motion.div 

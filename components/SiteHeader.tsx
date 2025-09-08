@@ -138,10 +138,6 @@ export default function SiteHeader() {
         <div className="hidden items-center gap-2 md:flex">
           {role === 'ADMIN' && (
             <>
-              <Link href="/upload" className="btn-holo primary group">
-                <Upload size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
-                <span>Upload</span>
-              </Link>
               <Link href="/admin" className="btn-holo secondary group">
                 <Shield size={18} className="transition-transform duration-300 group-hover:rotate-12" /> 
                 <span>Admin</span>
@@ -207,9 +203,6 @@ export default function SiteHeader() {
             
             {role === 'ADMIN' && (
               <>
-                <Link href="/upload" className="btn-holo primary">
-                  <Upload size={18} /> Upload
-                </Link>
                 <Link href="/admin" className="btn-holo secondary">
                   <Shield size={18} /> Admin
                 </Link>

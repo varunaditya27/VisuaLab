@@ -27,6 +27,9 @@ export async function r2GetSignedUrl(bucket: string, key: string) {
 }
 
 export function r2PublicUrl(key: string) {
+  // If key is already a full URL or an absolute path, return as-is
+  if (/^https?:\/\//i.test(key)) return key
+  if (key.startsWith('/')) return key
   const base = process.env.R2_PUBLIC_BASE_URL
   const bucket = process.env.R2_BUCKET
   const account = process.env.R2_ACCOUNT_ID
@@ -44,4 +47,17 @@ export function r2PublicUrl(key: string) {
     return `https://${bucket}.${account}.r2.dev/${key}`
   }
   return null
+}
+
+export async function r2GetObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+  const res = await r2Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+  // @ts-ignore - res.Body is a stream
+  const stream = res.Body as NodeJS.ReadableStream
+  const chunks: Buffer[] = []
+  await new Promise<void>((resolve, reject) => {
+    stream.on('data', (c: Buffer) => chunks.push(Buffer.from(c)))
+    stream.on('error', reject)
+    stream.on('end', () => resolve())
+  })
+  return Buffer.concat(chunks)
 }
