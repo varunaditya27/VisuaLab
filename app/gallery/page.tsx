@@ -1,11 +1,16 @@
-import dynamic from 'next/dynamic'
+import GalleryExplorer from '@/components/GalleryExplorer'
 
-const GalleryGrid = dynamic(() => import('@/components/GalleryGrid').then(m => m.GalleryGrid))
-
-async function fetchImages(album?: string | null) {
+async function fetchImages(params: { album?: string | null; q?: string; tags?: string; from?: string; to?: string; license?: string } = {}) {
   try {
-    const q = album ? `?album=${encodeURIComponent(album)}` : ''
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/images${q}`, { cache: 'no-store' })
+    const sp = new URLSearchParams()
+    if (params.album) sp.set('album', params.album)
+    if (params.q) sp.set('q', params.q)
+    if (params.tags) sp.set('tags', params.tags)
+    if (params.from) sp.set('from', params.from)
+    if (params.to) sp.set('to', params.to)
+    if (params.license) sp.set('license', params.license)
+    const qs = sp.toString()
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/images${qs ? `?${qs}` : ''}`, { cache: 'no-store' })
     if (!res.ok) return { images: [] }
     return res.json()
   } catch {
@@ -16,7 +21,12 @@ async function fetchImages(album?: string | null) {
 export default async function GalleryPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const sp = await searchParams
   const album = typeof sp.album === 'string' ? sp.album : null
-  const { images } = await fetchImages(album)
+  const q = typeof sp.q === 'string' ? sp.q : undefined
+  const tags = typeof sp.tags === 'string' ? sp.tags : undefined
+  const from = typeof sp.from === 'string' ? sp.from : undefined
+  const to = typeof sp.to === 'string' ? sp.to : undefined
+  const license = typeof sp.license === 'string' ? sp.license : undefined
+  const { images } = await fetchImages({ album, q, tags, from, to, license })
 
   return (
     <div className="relative">
@@ -35,7 +45,7 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
         )}
       </div>
 
-      <GalleryGrid images={images} />
+      <GalleryExplorer initial={{ images, album, q: q || undefined, tags: tags || undefined, from, to, license }} />
     </div>
   )
 }
