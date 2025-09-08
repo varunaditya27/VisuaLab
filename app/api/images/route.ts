@@ -25,18 +25,23 @@ export async function GET(request: Request) {
       const db = prisma as any
       const img = await db.image.findUnique({
         where: { id: imageId },
-        select: { id: true, title: true, thumbKey: true, privacy: true, userId: true }
+        select: { id: true, title: true, thumbKey: true, privacy: true, userId: true, r2Key: true }
       })
       if (!img) return NextResponse.json({ images: [] })
       const canView = isAdmin || img.privacy === 'PUBLIC' || (img.privacy === 'UNLISTED') || (img.userId && img.userId === userId)
       if (!canView) return NextResponse.json({ images: [] })
       const bucket = process.env.R2_BUCKET
       let thumbUrl: string | null = null
+      let originalUrl: string | null = null
       if (img.thumbKey && bucket) {
         try { thumbUrl = await r2GetSignedUrl(bucket, img.thumbKey) } catch {}
       }
       if (!thumbUrl && img.thumbKey) thumbUrl = r2PublicUrl(img.thumbKey)
-      return NextResponse.json({ images: [{ id: img.id, title: img.title, thumbUrl }] })
+      if (img.r2Key && bucket) {
+        try { originalUrl = await r2GetSignedUrl(bucket, img.r2Key) } catch {}
+      }
+      if (!originalUrl && img.r2Key) originalUrl = r2PublicUrl(img.r2Key)
+      return NextResponse.json({ images: [{ id: img.id, title: img.title, thumbUrl, originalUrl }] })
     }
 
     // Build where filter for list
