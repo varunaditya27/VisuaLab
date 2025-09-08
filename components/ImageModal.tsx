@@ -59,6 +59,8 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
         }
       } catch {}
     })()
+  // Log a view (fire-and-forget)
+  fetch('/api/views', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId }) }).catch(() => {})
   }, [imageId])
 
   function promptLogin(tab: 'login' | 'register' = 'login') {
