@@ -22,6 +22,7 @@ model User {
   comments  Comment[]
   views     ImageView[]
   palettes  Palette[]
+  generationJobs GenerationJob[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -43,6 +44,7 @@ model Image {
   thumbKey    String?
   responsive  Json?
   exif        Json?
+  generationMeta Json?
   license     String?
   attribution String?
   privacy     Privacy  @default(PUBLIC)
@@ -61,6 +63,7 @@ model Album {
   owner     User    @relation("AlbumOwner", fields: [ownerId], references: [id])
   ownerId   String
   images    Image[]
+  generationJobs GenerationJob[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -90,6 +93,14 @@ enum Privacy {
   PUBLIC
   UNLISTED
   PRIVATE
+}
+
+enum JobStatus {
+  queued
+  running
+  completed
+  failed
+  aborted
 }
 
 model Like {
@@ -130,4 +141,28 @@ model Palette {
   ownerId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model GenerationJob {
+  id         String    @id @default(cuid())
+  user       User?     @relation(fields: [userId], references: [id])
+  userId     String?
+  album      Album?    @relation(fields: [albumId], references: [id])
+  albumId    String?
+  prompt     String
+  seed       Int?
+  steps      Int?      @default(30)
+  width      Int?      @default(768)
+  height     Int?      @default(768)
+  batch      Int       @default(1)
+  provider   String
+  model      String?
+  status     JobStatus @default(queued)
+  logs       Json?
+  providerJobIds Json?
+  resultImageIds Json?
+  safetyTags Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  abortedAt  DateTime?
 }
