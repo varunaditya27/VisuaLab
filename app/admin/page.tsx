@@ -196,6 +196,8 @@ export default function AdminPage() {
             <a className="btn-holo ghost" href="/albums">Manage Albums</a>
             <a className="btn-holo ghost" href="/">Homepage</a>
       <a className="btn-holo secondary inline-flex items-center gap-2" href="/admin/editor" title="Open the image editor"><Scissors size={16}/> Image Editor</a>
+  <a className="btn-holo ghost" href="/admin/generator">AI Generate</a>
+  <a className="btn-holo ghost" href="/admin/palette">Theme</a>
           </div>
         </div>
       </div>

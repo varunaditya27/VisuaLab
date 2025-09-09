@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk, Orbitron, JetBrains_Mono } from 'next/font/google'
 import SiteHeader from '@/components/SiteHeader'
 import SiteFooter from '@/components/SiteFooter'
+import PaletteApplier from '@/components/PaletteApplier'
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -48,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${orbitron.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-dvh aurora-bg text-ink antialiased flex flex-col relative overflow-x-hidden">
+  <PaletteApplier />
         {/* Particle Background Layer */}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 particles opacity-20"></div>
