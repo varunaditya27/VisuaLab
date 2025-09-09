@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Camera, GalleryHorizontal, Upload, Menu, X, FolderOpen, LogIn, LogOut, Shield } from 'lucide-react'
+import { Camera, GalleryHorizontal, Upload, Menu, X, FolderOpen, LogIn, LogOut, Shield, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: any }) {
@@ -132,6 +132,7 @@ export default function SiteHeader() {
           <NavLink href="/" label="Home" icon={GalleryHorizontal} />
           <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
           <NavLink href="/albums" label="Albums" icon={FolderOpen} />
+          <NavLink href="/search/vector" label="Visual Search" icon={Search} />
         </nav>
 
         {/* Right actions */}
@@ -200,6 +201,7 @@ export default function SiteHeader() {
             <NavLink href="/" label="Home" icon={GalleryHorizontal} />
             <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
             <NavLink href="/albums" label="Albums" icon={FolderOpen} />
+            <NavLink href="/search/vector" label="Visual Search" icon={Search} />
             
             {role === 'ADMIN' && (
               <>
