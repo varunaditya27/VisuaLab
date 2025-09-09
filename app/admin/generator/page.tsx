@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type Job = {
   id: string
@@ -12,6 +12,8 @@ type Job = {
 type ImageLite = { id: string; title?: string | null; thumbUrl?: string | null }
 
 export default function GeneratorPage() {
+  const [hydrated, setHydrated] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
   const [prompt, setPrompt] = useState('A neon cyberpunk cityscape, rain, reflections, ultra-detailed')
   const [negative, setNegative] = useState('blurry, low quality, watermark, text')
   const [seed, setSeed] = useState<number | undefined>(undefined)
@@ -21,7 +23,7 @@ export default function GeneratorPage() {
   const [batch, setBatch] = useState(1)
   const [albumId, setAlbumId] = useState('')
   const [consent, setConsent] = useState(false)
-  const [provider, setProvider] = useState('replicate')
+  const [provider, setProvider] = useState('pollinations')
   const [albums, setAlbums] = useState<Array<{ id: string; name: string }>>([])
 
   const [jobId, setJobId] = useState<string | null>(null)
@@ -29,10 +31,14 @@ export default function GeneratorPage() {
   const [images, setImages] = useState<ImageLite[]>([])
   const pollRef = useRef<number | null>(null)
 
-  const loggedIn = useMemo(() => {
-    if (typeof document === 'undefined') return false
-    const u = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
-    return !!u
+  useEffect(() => {
+    setHydrated(true)
+    try {
+      const u = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
+      setLoggedIn(!!u)
+    } catch {
+      setLoggedIn(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -94,6 +100,17 @@ export default function GeneratorPage() {
     return () => { if (pollRef.current) window.clearInterval(pollRef.current); pollRef.current = null }
   }, [jobId])
 
+  if (!hydrated) {
+    return (
+      <div className="container py-8">
+        <div className="card-quantum max-w-md mx-auto p-8 text-center">
+          <h2 className="font-heading text-2xl mb-2">Loading Generator…</h2>
+          <p className="text-gray-600">Preparing tools.</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!loggedIn) {
     return (
       <div className="container py-12">
@@ -133,7 +150,7 @@ export default function GeneratorPage() {
                 I consent to viewing potentially NSFW content.
               </label>
               <select className="input-neural max-w-40" value={provider} onChange={(e) => setProvider(e.target.value)}>
-                <option value="replicate">Replicate</option>
+                <option value="pollinations">Pollinations (free)</option>
               </select>
             </div>
             <div className="flex gap-2">
