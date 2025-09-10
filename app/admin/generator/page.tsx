@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { Sparkles, Loader2 } from 'lucide-react'
 
 type Job = {
   id: string
@@ -100,13 +102,14 @@ export default function GeneratorPage() {
     return () => { if (pollRef.current) window.clearInterval(pollRef.current); pollRef.current = null }
   }, [jobId])
 
+// ... (component definition)
+
   if (!hydrated) {
     return (
-      <div className="container py-8">
-        <div className="card-quantum max-w-md mx-auto p-8 text-center">
-          <h2 className="font-heading text-2xl mb-2">Loading Generator…</h2>
-          <p className="text-gray-600">Preparing tools.</p>
-        </div>
+      <div className="container py-8 text-center">
+        <Loader2 className="mx-auto animate-spin text-primary" size={32} />
+        <h2 className="mt-4 font-heading text-2xl">Loading Generator...</h2>
+        <p className="text-muted-foreground">Preparing tools.</p>
       </div>
     )
   }
@@ -114,9 +117,9 @@ export default function GeneratorPage() {
   if (!loggedIn) {
     return (
       <div className="container py-12">
-        <div className="card-quantum max-w-md mx-auto p-8 text-center">
+        <div className="max-w-md mx-auto p-8 text-center rounded-2xl bg-card shadow-lg">
           <h2 className="font-heading text-2xl mb-2">Sign in required</h2>
-          <p className="text-gray-600 mb-6">You must be signed in to generate images.</p>
+          <p className="text-muted-foreground mb-6">You must be signed in to generate images.</p>
         </div>
       </div>
     )
@@ -124,56 +127,66 @@ export default function GeneratorPage() {
 
   return (
     <div className="container py-8">
-      <div className="mb-6">
-        <h1 className="font-heading text-3xl font-bold text-holographic">AI Image Generator</h1>
-        <p className="text-gray-600">Generate images from text prompts and save them to your gallery.</p>
+      <div className="mb-8">
+        <h1 className="font-heading text-3xl font-bold">AI Image Generator</h1>
+        <p className="text-muted-foreground">Generate images from text prompts and save them to your gallery.</p>
       </div>
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="card-quantum p-4 md:col-span-2">
-          <div className="space-y-3">
-            <textarea className="input-neural min-h-28" placeholder="Describe your image..." value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-            <input className="input-neural" placeholder="Negative prompt (optional)" value={negative} onChange={(e) => setNegative(e.target.value)} />
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <input className="input-neural" type="number" placeholder="Seed (optional)" value={seed ?? ''} onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)} />
-              <input className="input-neural" type="number" placeholder="Steps" value={steps} onChange={(e) => setSteps(parseInt(e.target.value) || 28)} />
-              <input className="input-neural" type="number" placeholder="Batch" value={batch} onChange={(e) => setBatch(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))} />
-              <input className="input-neural" type="number" placeholder="Width" value={width} onChange={(e) => setWidth(parseInt(e.target.value) || 768)} />
-              <input className="input-neural" type="number" placeholder="Height" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 768)} />
-              <select className="input-neural" value={albumId} onChange={(e) => setAlbumId(e.target.value)}>
-                <option value="">No album</option>
-                {albums.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                I consent to viewing potentially NSFW content.
-              </label>
-              <select className="input-neural max-w-40" value={provider} onChange={(e) => setProvider(e.target.value)}>
-                <option value="pollinations">Pollinations (free)</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              <button className="btn-holo primary" onClick={startJob} disabled={!!jobId}>Generate</button>
-              <button className="btn-holo ghost" onClick={abortJob} disabled={!jobId}>Abort</button>
+      <div className="grid md:grid-cols-12 gap-6">
+        <div className="md:col-span-8">
+          <div className="p-6 rounded-2xl bg-card shadow">
+            <div className="space-y-4">
+              <textarea className="input min-h-28" placeholder="Describe your image..." value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+              <input className="input w-full" placeholder="Negative prompt (optional)" value={negative} onChange={(e) => setNegative(e.target.value)} />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <input className="input" type="number" placeholder="Seed (optional)" value={seed ?? ''} onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)} />
+                <input className="input" type="number" placeholder="Steps" value={steps} onChange={(e) => setSteps(parseInt(e.target.value) || 28)} />
+                <input className="input" type="number" placeholder="Batch" value={batch} onChange={(e) => setBatch(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))} />
+                <input className="input" type="number" placeholder="Width" value={width} onChange={(e) => setWidth(parseInt(e.target.value) || 768)} />
+                <input className="input" type="number" placeholder="Height" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 768)} />
+                <select className="input" value={albumId} onChange={(e) => setAlbumId(e.target.value)}>
+                  <option value="">No album</option>
+                  {albums.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input type="checkbox" className="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                  I consent to viewing potentially NSFW content.
+                </label>
+                <select className="input max-w-48" value={provider} onChange={(e) => setProvider(e.target.value)}>
+                  <option value="pollinations">Pollinations (free)</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button onClick={startJob} disabled={!!jobId} className="inline-flex items-center gap-2">
+                  <Sparkles size={16} />
+                  {jobId ? 'Generating...' : 'Generate'}
+                </Button>
+                <Button onClick={abortJob} disabled={!jobId} className="!bg-transparent !border-none text-muted-foreground hover:text-white">Abort</Button>
+              </div>
             </div>
           </div>
         </div>
-        <div className="card-quantum p-4">
-          <h3 className="font-heading text-lg mb-2">Job Status</h3>
-          <div className="text-sm text-gray-700">{job?.status ?? (jobId ? 'running...' : 'idle')}</div>
-          <div className="mt-3 max-h-60 overflow-y-auto text-xs text-gray-600 whitespace-pre-wrap">
-            {(job?.logs || []).slice().reverse().map((l: string, i: number) => (<div key={i}>{l}</div>))}
+        <div className="md:col-span-4">
+          <div className="p-6 rounded-2xl bg-card shadow sticky top-24">
+            <h3 className="font-heading text-lg mb-3">Job Status</h3>
+            <div className="flex items-center gap-2 text-sm font-medium mb-3">
+              {jobId && <Loader2 className="animate-spin" size={16} />}
+              <span className="capitalize">{job?.status ?? (jobId ? 'Running...' : 'Idle')}</span>
+            </div>
+            <div className="bg-background/50 p-3 rounded-lg max-h-64 overflow-y-auto text-xs text-muted-foreground whitespace-pre-wrap space-y-1">
+              {(job?.logs || []).slice().reverse().map((l: string, i: number) => (<div key={i}>{l}</div>))}
+            </div>
           </div>
         </div>
       </div>
-      <div className="mt-6">
-        <h3 className="font-heading text-lg mb-2">Results</h3>
-        {images.length === 0 && <p className="text-sm text-gray-600">No images yet.</p>}
-        <div className="galaxy-grid">
+      <div className="mt-8">
+        <h2 className="font-heading text-2xl mb-4">Results</h2>
+        {images.length === 0 && <p className="text-sm text-muted-foreground">No images yet. Your generated images will appear here.</p>}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map(img => (
-            <a key={img.id} className="galaxy-grid-item group block" href={`/admin/editor?imageId=${encodeURIComponent(img.id)}`}>
-              <img src={img.thumbUrl ?? ''} className="w-full h-56 object-cover rounded-xl" />
+            <a key={img.id} className="group block" href={`/admin/editor?imageId=${encodeURIComponent(img.id)}`}>
+              <img src={img.thumbUrl ?? ''} alt={img.title ?? 'Generated image'} className="w-full h-56 object-cover rounded-xl transition-transform group-hover:scale-105" />
             </a>
           ))}
         </div>

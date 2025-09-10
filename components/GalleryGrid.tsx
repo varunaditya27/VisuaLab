@@ -41,8 +41,8 @@ function GalleryItem({ image, onImageClick }: { image: ImageRec; onImageClick: (
   return (
     <motion.div
       variants={staggerItem}
-      whileHover={{ y: -5, scale: 1.02, boxShadow: '0px 10px 30px -5px rgba(0, 0, 0, 0.3)' }}
-      className="group relative rounded-lg overflow-hidden mb-4 border border-white/10"
+      whileHover={{ y: -5, scale: 1.02 }}
+      className="group relative rounded-lg overflow-hidden mb-4 card-interactive"
     >
       <div 
         className="relative overflow-hidden cursor-pointer"

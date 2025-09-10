@@ -5,6 +5,7 @@ import SiteHeader from '@/components/SiteHeader'
 import SiteFooter from '@/components/SiteFooter'
 import PageTransition from '@/components/PageTransition'
 import AnimatedBackground from '@/components/AnimatedBackground'
+import AuthModal from '@/components/AuthModal'
 
 const fontSans = Lato({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default function RootLayout({
         <AnimatedBackground />
         <div className="flex flex-col min-h-dvh">
           <SiteHeader />
+          <AuthModal />
           <main className="flex-1">
             <div className="container py-8 md:py-12">
               <PageTransition>{children}</PageTransition>

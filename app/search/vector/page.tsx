@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Search, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Loader2 } from 'lucide-react'
 
 type Result = { imageId: string; score: number; title?: string | null; thumbUrl?: string | null }
 type Album = { id: string; name: string }
@@ -55,72 +57,78 @@ export default function VectorSearchPage() {
     } finally { setLoading(false) }
   }
 
+// ... (component definition)
+
   return (
     <div className="container py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold text-holographic">Visual Search</h1>
-          <p className="text-gray-600">Find images by meaning. This is different from keyword search in Gallery.</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="font-heading text-3xl md:text-4xl font-bold">Visual Search</h1>
+        <p className="text-muted-foreground">Find images by meaning, not just by keywords.</p>
       </div>
 
       {/* Query card */}
-      <form onSubmit={submit} className="card-quantum p-5">
-        <div className="mb-4 grid grid-cols-2 gap-2 glass-subtle rounded-2xl p-2 w-full sm:w-[420px]">
-          <button type="button" onClick={() => setMode('text')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${mode==='text' ? 'bg-aurora-primary text-white shadow-aurora-glow' : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'}`}>
-            <span className="inline-flex items-center gap-2"><Search size={16}/> Text</span>
-          </button>
-          <button type="button" onClick={() => setMode('image')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${mode==='image' ? 'bg-aurora-primary text-white shadow-aurora-glow' : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'}`}>
-            <span className="inline-flex items-center gap-2"><ImageIcon size={16}/> Image</span>
-          </button>
-        </div>
-
-        <div className="mb-4 flex items-center gap-2">
-          <div className="relative w-56">
-            <select value={albumId} onChange={e => setAlbumId(e.target.value)} className="input-neural appearance-none w-full pr-8">
+      <form onSubmit={submit} className="p-6 rounded-2xl bg-card shadow">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Mode Toggle */}
+          <div className="p-1 rounded-full bg-background flex">
+            <button type="button" onClick={() => setMode('text')} className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${mode === 'text' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>
+              <span className="inline-flex items-center gap-2"><Search size={16}/> Text</span>
+            </button>
+            <button type="button" onClick={() => setMode('image')} className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${mode === 'image' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>
+              <span className="inline-flex items-center gap-2"><ImageIcon size={16}/> Image</span>
+            </button>
+          </div>
+          
+          {/* Album Filter */}
+          <div className="relative">
+            <select value={albumId} onChange={e => setAlbumId(e.target.value)} className="input appearance-none pr-8">
               <option value="">All albums</option>
               {albums.map(a => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">▾</span>
           </div>
         </div>
 
-    {mode === 'text' ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <input className="input-neural flex-1" placeholder="Describe an image (e.g. ‘sunset over mountains’)" value={text ?? ''} onChange={e => setText(e.target.value ?? '')} />
-            <button className="btn-holo primary" disabled={loading || (text ?? '').trim().length === 0}>
-              <Sparkles size={16} className="mr-2"/>
-              {loading ? 'Searching…' : 'Search'}
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} className="input-neural" />
-            <button className="btn-holo primary" disabled={loading || !file}>
-              <Sparkles size={16} className="mr-2"/>
-              {loading ? 'Searching…' : 'Search'}
-            </button>
-          </div>
-        )}
+        <div className="mt-4">
+          {mode === 'text' ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input className="input flex-1" placeholder="Describe an image (e.g. ‘sunset over mountains’)" value={text ?? ''} onChange={e => setText(e.target.value ?? '')} />
+              <Button className="inline-flex items-center gap-2" disabled={loading || (text ?? '').trim().length === 0}>
+                {loading ? <Loader2 size={16} className="animate-spin"/> : <Sparkles size={16} />}
+                {loading ? 'Searching...' : 'Search'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} className="input flex-1" />
+              <Button className="inline-flex items-center gap-2" disabled={loading || !file}>
+                {loading ? <Loader2 size={16} className="animate-spin"/> : <Sparkles size={16} />}
+                {loading ? 'Searching...' : 'Search'}
+              </Button>
+            </div>
+          )}
+        </div>
       </form>
 
       {/* Results */}
-      <div className="mt-6">
+      <div className="mt-8">
         {error && (
-          <div className="glass-subtle rounded-2xl p-3 border border-red-300 text-red-600 text-sm mb-4">{error}</div>
+          <div className="rounded-2xl p-4 border border-destructive/50 bg-destructive/10 text-destructive text-sm mb-4">{error}</div>
         )}
         {results.length === 0 ? (
-          <div className="glass-subtle rounded-2xl p-6 text-gray-600 text-sm">No results yet. Try a descriptive prompt or upload a reference image.</div>
+          <div className="rounded-2xl p-8 text-center border-2 border-dashed border-border">
+            <p className="text-muted-foreground">No results yet. Try a descriptive prompt or upload a reference image.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {results.map(r => (
-              <a key={r.imageId} href={`/admin/editor?imageId=${encodeURIComponent(r.imageId)}`} className="block group card-quantum overflow-hidden">
-                <img src={r.thumbUrl || ''} alt={r.title || ''} className="w-full h-40 object-cover rounded" />
-                <div className="p-3 flex items-center justify-between text-xs text-gray-600">
-                  <div className="truncate max-w-[70%]">{r.title || 'Untitled'}</div>
-                  <div className="text-gray-400">{r.score.toFixed(3)}</div>
+              <a key={r.imageId} href={`/admin/editor?imageId=${encodeURIComponent(r.imageId)}`} className="block group bg-card rounded-lg overflow-hidden shadow transition-all hover:shadow-lg hover:-translate-y-1">
+                <img src={r.thumbUrl || ''} alt={r.title || ''} className="w-full h-40 object-cover" />
+                <div className="p-3">
+                  <div className="font-medium truncate text-sm">{r.title || 'Untitled'}</div>
+                  <div className="text-xs text-muted-foreground">Score: {r.score.toFixed(3)}</div>
                 </div>
               </a>
             ))}
