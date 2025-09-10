@@ -5,6 +5,8 @@ import { r2PutObject } from '@/lib/r2'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { getSessionInfo } from '@/lib/session'
+import { getVectorProvider } from '@/lib/vector/provider'
+import { weaviateUpsertImage } from '@/lib/vector/weaviate'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -83,6 +85,24 @@ export async function POST(request: Request) {
       await prisma.imageTag.createMany({ data: tags.map(t => ({ imageId: image.id, tagId: t.id })) })
     }
   }
+
+  // Background embed + index
+  ;(async () => {
+    try {
+      const provider = getVectorProvider()
+      const originalKey = hasR2 ? `${baseKey}/original.jpg` : `/${baseKey}/original.jpg`
+      const publicUrl = hasR2 ? (process.env.R2_PUBLIC_BASE_URL ? `${process.env.R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${process.env.R2_BUCKET}/${originalKey}` : null) : `${process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '')}${originalKey}`
+      const emb = publicUrl ? await provider.embedImageFromUrl(publicUrl) : await provider.embedImageFromBuffer(processed.original.buffer)
+      await weaviateUpsertImage(image.id, emb, {
+        createdAt: new Date().toISOString(),
+        albumId: image.albumId ?? null,
+        privacy: (image as any).privacy ?? 'PUBLIC',
+        userId: image.userId ?? null,
+      })
+    } catch (e) {
+      console.error('Vector index error', e)
+    }
+  })()
 
   return NextResponse.json({ image })
 }

@@ -2,8 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Camera, GalleryHorizontal, Menu, X, FolderOpen, LogIn, LogOut, Shield, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { LinkButton } from '@/components/ui/LinkButton'
@@ -52,18 +50,6 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <motion.div whileHover={{ rotate: -15, scale: 1.1 }} transition={{ type: 'spring', stiffness: 300 }}>
-              <Camera className="h-6 w-6" />
-            </motion.div>
-            <span className="hidden font-bold sm:inline-block">VisuaLab</span>
-          </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {mainNav.map(item => <NavLink key={item.href} {...item} />)}
-          </nav>
         </div>
 
         {/* Mobile Menu Button */}
@@ -95,9 +81,6 @@ export default function SiteHeader() {
           </div>
         )}
 
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            {username ? (
               <>
                 {role === 'ADMIN' && (
                   <LinkButton href="/admin" className="!bg-transparent !border-none text-muted-foreground hover:text-white">

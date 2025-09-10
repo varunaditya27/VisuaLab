@@ -6,6 +6,8 @@ import { processImage } from '@/lib/images'
 import { r2PutObject } from '@/lib/r2'
 import path from 'path'
 import { promises as fs } from 'fs'
+import { getVectorProvider } from '@/lib/vector/provider'
+import { weaviateUpsertImage } from '@/lib/vector/weaviate'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -121,6 +123,24 @@ export async function POST(req: Request) {
         })
         savedImageIds.push(imgRow.id)
         if (img.safetyTags) safetyTagsAll.push(...img.safetyTags)
+        // Fire-and-forget embedding + index in Weaviate
+        ;(async () => {
+          try {
+            const provider = getVectorProvider()
+            // Prefer a public/origin URL for embedding call; if using R2 public, build URL
+            const originalKey = hasR2 ? `${baseKey}/original.jpg` : `/${baseKey}/original.jpg`
+            const publicUrl = hasR2 ? (process.env.R2_PUBLIC_BASE_URL ? `${process.env.R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${process.env.R2_BUCKET}/${originalKey}` : null) : `${process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '')}${originalKey}`
+            const emb = publicUrl ? await provider.embedImageFromUrl(publicUrl) : await provider.embedImageFromBuffer(processed.original.buffer)
+            await weaviateUpsertImage(imgRow.id, emb, {
+              createdAt: new Date().toISOString(),
+              albumId: imgRow.albumId ?? null,
+              privacy: (imgRow as any).privacy ?? 'PUBLIC',
+              userId: imgRow.userId ?? null,
+            })
+          } catch (e) {
+            console.error('Vector index error', e)
+          }
+        })()
       }
       await db.generationJob.update({
         where: { id: job.id },
