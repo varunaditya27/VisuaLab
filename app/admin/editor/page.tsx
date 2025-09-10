@@ -1,14 +1,32 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Scissors, ArrowLeft, Wand2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { LinkButton } from '@/components/ui/LinkButton'
+import { Button } from '@/components/ui/Button'
 const ProImageEditor = dynamic(() => import('@/components/ProImageEditor'), { ssr: false })
 
 type ImageLite = { id: string; title?: string | null; thumbUrl?: string | null }
 
+// Wrapper to satisfy Next.js requirement: useSearchParams must be within a Suspense boundary
 export default function AdminEditorPage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-12">
+        <div className="card-quantum max-w-md mx-auto p-8 text-center">
+          <h2 className="font-heading text-2xl mb-2">Loading Image Editor…</h2>
+          <p className="text-gray-600">Preparing editor...</p>
+        </div>
+      </div>
+    }>
+      <AdminEditorClient />
+    </Suspense>
+  )
+}
+
+function AdminEditorClient() {
   const params = useSearchParams()
   const [images, setImages] = useState<ImageLite[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -113,24 +131,24 @@ export default function AdminEditorPage() {
     <div className="container py-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <a className="btn-holo ghost inline-flex items-center gap-2" href="/admin"><ArrowLeft size={16}/> Back</a>
+          <LinkButton href="/admin" className="!bg-transparent !border-none inline-flex items-center gap-2"><ArrowLeft size={16}/> Back</LinkButton>
           <h1 className="font-heading text-2xl">Image Editor</h1>
         </div>
-  <div className="text-sm text-gray-500">Full-featured editor • All tools inside the canvas UI</div>
+        <div className="text-sm text-gray-500">Full-featured editor • All tools inside the canvas UI</div>
       </div>
 
-      <div className="grid md:grid-cols-12 gap-4">
+      <div className="grid md:grid-cols-12 gap-4 h-[80vh]">
         {/* Sidebar: image list + search */}
-        <div className="md:col-span-4 card-quantum p-4">
+        <div className="md:col-span-4 card-quantum p-4 flex flex-col">
           <div className="mb-3 flex items-center gap-2">
             <input className="input-neural w-full" placeholder="Search images by title" value={filter} onChange={(e) => setFilter(e.target.value)} />
           </div>
-          <div className="max-h-[70vh] overflow-y-auto grid grid-cols-3 md:grid-cols-2 gap-2 pr-1">
+          <div className="flex-1 overflow-y-auto grid grid-cols-3 md:grid-cols-2 gap-2 pr-1">
             {filtered.map(img => (
-              <button key={img.id} className={`relative block text-left ${selectedId===img.id ? 'ring-2 ring-electric-blue rounded' : ''}`} onClick={() => setSelectedId(img.id)}>
+              <Button key={img.id} className={`relative block text-left ${selectedId===img.id ? 'ring-2 ring-electric-blue rounded' : ''} !p-0 !bg-transparent !border-none`} onClick={() => setSelectedId(img.id)}>
                 <img src={img.thumbUrl ?? ''} alt={img.title ?? ''} className="w-full h-24 object-cover rounded" />
                 <div className="mt-1 truncate text-xs text-gray-600">{img.title ?? 'Untitled'}</div>
-              </button>
+              </Button>
             ))}
             {filtered.length === 0 && (
               <div className="text-sm text-gray-500 col-span-full">No images found.</div>
@@ -140,7 +158,7 @@ export default function AdminEditorPage() {
 
         {/* Main: embedded editor only */}
         <div className="md:col-span-8 space-y-4">
-          <div className="editor-card">
+          <div className="editor-card h-full">
             <div className="editor-card-header">
               <h3 className="font-heading text-lg flex items-center gap-2"><Wand2 size={18}/> Editor</h3>
             </div>

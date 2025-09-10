@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
+import { ColorPicker } from '@/components/ui/ColorPicker'
+import { Button } from '@/components/ui/Button'
+import { presetPalettes } from '@/lib/palettes'
 
 type Palette = { id: string; name: string; json: Record<string, string> }
 
@@ -119,28 +122,31 @@ export default function PaletteEditorPage() {
           <p className="text-gray-600">Tune your site colors with live preview and WCAG guidance.</p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-holo primary" onClick={savePalette}>Save</button>
-          <button className="btn-holo ghost" onClick={exportPalette}>Export</button>
-          <label className="btn-holo ghost cursor-pointer">
-            Import
+          <Button onClick={savePalette}>Save</Button>
+          <Button className="!bg-transparent !border-purple-500/50" onClick={exportPalette}>Export</Button>
+          <label className="relative inline-flex items-center justify-center px-6 py-2.5 overflow-hidden font-semibold text-white transition duration-300 ease-out border-2 border-purple-500/50 rounded-lg shadow-lg group backdrop-blur-sm cursor-pointer">
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-600/70 via-blue-500/70 to-indigo-700/70 opacity-80 group-hover:opacity-100 transition-opacity duration-300"></span>
+            <span className="absolute top-0 left-0 w-full h-full transition-all duration-300 ease-in-out transform -translate-x-full bg-white opacity-20 group-hover:translate-x-full group-hover:skew-x-12"></span>
+            <span className="relative">Import</span>
             <input type="file" accept="application/json" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) importPalette(f) }} />
           </label>
-          <button className="btn-holo secondary" onClick={applyForUser}>Apply</button>
-          <button className="btn-holo ghost" onClick={resetPalette}>Reset</button>
+          <Button className="!bg-transparent !border-purple-500/50" onClick={applyForUser}>Apply</Button>
+          <Button className="!bg-transparent !border-none" onClick={resetPalette}>Reset</Button>
         </div>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         <div className="card-quantum p-4 md:col-span-2">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {KEYS.map(k => (
-              <div key={k.key} className="space-y-1">
-                <div className="text-xs text-gray-600">{k.label}</div>
-                <input className="input-neural" value={values[k.key] ?? ''} onChange={(e) => setValue(k.key, e.target.value)} placeholder="e.g. #101018 or 255 255 255" />
+              <div key={k.key} className="space-y-2">
+                <div className="text-xs text-gray-400">{k.label}</div>
+                <ColorPicker color={values[k.key] ?? '#ffffff'} onChange={(c) => setValue(k.key, c)} />
+                <input className="input-neural w-full" value={values[k.key] ?? ''} onChange={(e) => setValue(k.key, e.target.value)} placeholder="e.g. #101018 or 255 255 255" />
               </div>
             ))}
           </div>
           <div className="mt-4 text-xs text-gray-600">
-            Tip: For variables used as rgb(var(--bg)), enter space-separated RGB like "255 255 255".
+            Tip: For variables used as rgb(var(--bg)), enter space-separated RGB like &quot;255 255 255&quot;.
           </div>
         </div>
         <div className="card-quantum p-4">
@@ -158,30 +164,75 @@ export default function PaletteEditorPage() {
           <ContrastChecker fg={values['--fg'] || '11 16 32'} bg={values['--bg'] || '255 255 255'} />
         </div>
       </div>
+
       <div className="mt-6">
-        <h3 className="font-heading text-lg mb-2">Live Preview</h3>
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="card-quantum p-6">
-            <h4 className="font-heading mb-2">Buttons</h4>
-            <div className="flex flex-wrap gap-2">
-              <button className="btn-holo primary">Primary</button>
-              <button className="btn-holo secondary">Secondary</button>
-              <button className="btn-holo ghost">Ghost</button>
+        <h3 className="font-heading text-lg mb-2">Preset Themes</h3>
+        <div className="grid md:grid-cols-4 gap-4">
+          {presetPalettes.map(p => (
+            <div key={p.name} className="card-quantum p-4 cursor-pointer hover:ring-2 ring-electric-blue" onClick={() => { setValues(p.values); setName(p.name); setSelected(''); }}>
+              <div className="font-bold mb-2">{p.name}</div>
+              <div className="flex gap-1">
+                {Object.values(p.values).slice(2, 7).map(c => (
+                  <div key={c} className="w-4 h-4 rounded-full" style={{ background: c.includes(' ') ? `rgb(${c})` : c }} />
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="card-quantum p-6">
-            <h4 className="font-heading mb-2">Cards</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="card-quantum p-4">Card A</div>
-              <div className="card-quantum p-4">Card B</div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="font-heading text-2xl mb-4 text-center">Live Preview</h3>
+        <div className="border-2 border-dashed border-white/20 rounded-2xl p-6 space-y-6 bg-background/50">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Column 1: Buttons and Badges */}
+            <div className="space-y-6">
+              <div className="card-quantum p-4">
+                <h4 className="font-heading mb-3">Buttons</h4>
+                <div className="flex flex-wrap gap-3">
+                  <Button>Primary</Button>
+                  <Button className="!bg-transparent !border-purple-500/50">Secondary</Button>
+                  <Button className="!bg-transparent !border-none">Ghost</Button>
+                </div>
+              </div>
+              <div className="card-quantum p-4">
+                <h4 className="font-heading mb-3">Badges</h4>
+                <div className="flex flex-wrap gap-3">
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--electric-blue)', color: 'var(--void-black)' }}>Info</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--plasma-green)', color: 'var(--void-black)' }}>Success</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--solar-orange)', color: 'var(--void-black)' }}>Warning</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="card-quantum p-6">
-            <h4 className="font-heading mb-2">Badges</h4>
-            <div className="flex gap-2">
-              <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'var(--electric-blue)', color: '#000' }}>Info</span>
-              <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'var(--plasma-green)', color: '#000' }}>Success</span>
-              <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'var(--solar-orange)', color: '#000' }}>Warn</span>
+
+            {/* Column 2: Typography and Inputs */}
+            <div className="space-y-6">
+              <div className="card-quantum p-4">
+                <h4 className="font-heading mb-3">Typography</h4>
+                <div className="space-y-2">
+                  <h1 className="font-heading text-2xl">Heading 1</h1>
+                  <p className="text-foreground">This is a paragraph of text. It demonstrates the body copy color and style.</p>
+                  <a href="#" className="text-electric-blue hover:underline">This is a link</a>
+                </div>
+              </div>
+              <div className="card-quantum p-4">
+                <h4 className="font-heading mb-3">Inputs</h4>
+                <div className="space-y-3">
+                  <input className="input-neural w-full" placeholder="Text input..." />
+                  <select className="input-neural w-full">
+                    <option>Dropdown select</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3: Cards */}
+            <div className="card-quantum p-4">
+              <h4 className="font-heading mb-3">Cards</h4>
+              <div className="space-y-3">
+                <div className="card-quantum p-4">Quantum Card</div>
+                <div className="glass-subtle p-4 rounded-lg">Glass Card</div>
+              </div>
             </div>
           </div>
         </div>
