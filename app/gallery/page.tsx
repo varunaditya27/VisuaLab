@@ -29,18 +29,15 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
   const { images } = await fetchImages({ album, q, tags, from, to, license })
 
   return (
-    <div className="relative">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold text-holographic mb-2">Gallery</h1>
-          <p className="text-gray-600">Browse all creations{album ? ` in ${album}` : ''}.</p>
+          <h1 className="font-heading text-3xl md:text-4xl font-bold mb-1">Gallery</h1>
+          <p className="text-muted-foreground">Browse all creations{album ? ` in ${album}` : ''}.</p>
         </div>
         {images.length > 0 && (
-          <div className="glass-subtle rounded-2xl px-4 py-2">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-electric-blue rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-700">{images.length} {images.length === 1 ? 'Image' : 'Images'}</span>
-            </div>
+          <div>
+            <span className="text-sm text-muted-foreground">{images.length} {images.length === 1 ? 'Image' : 'Images'}</span>
           </div>
         )}
       </div>
