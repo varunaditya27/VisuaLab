@@ -1,0 +1,47 @@
+export const presetPalettes = [
+  {
+    name: 'Neon Sunset',
+    values: {
+      '--bg': '16 16 24',
+      '--fg': '230 230 255',
+      '--electric-blue': '#00d4ff',
+      '--cyber-purple': '#aa00ff',
+      '--neon-pink': '#ff00aa',
+      '--plasma-green': '#00ffaa',
+      '--solar-orange': '#ffaa00',
+      '--cosmic-violet': '#5500ff',
+      '--void-black': '#000000',
+      '--space-gray': '#888888',
+    },
+  },
+  {
+    name: 'Cyberpunk Night',
+    values: {
+      '--bg': '10 10 18',
+      '--fg': '220 220 255',
+      '--electric-blue': '#00ffff',
+      '--cyber-purple': '#ff00ff',
+      '--neon-pink': '#f72585',
+      '--plasma-green': '#39ff14',
+      '--solar-orange': '#ffdd00',
+      '--cosmic-violet': '#7209b7',
+      '--void-black': '#000000',
+      '--space-gray': '#6c757d',
+    },
+  },
+  {
+    name: 'Cosmic Ocean',
+    values: {
+      '--bg': '12 24 36',
+      '--fg': '240 240 255',
+      '--electric-blue': '#00b4d8',
+      '--cyber-purple': '#90e0ef',
+      '--neon-pink': '#caf0f8',
+      '--plasma-green': '#48cae4',
+      '--solar-orange': '#0077b6',
+      '--cosmic-violet': '#03045e',
+      '--void-black': '#020210',
+      '--space-gray': '#adb5bd',
+    },
+  },
+];
