@@ -1,6 +1,9 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { fadeIn, staggerContainer, staggerItem } from '@/lib/animations'
 
 export default function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
   const [file, setFile] = useState<File | null>(null)
@@ -50,12 +53,18 @@ export default function UploadForm({ onUploaded }: { onUploaded?: () => void }) 
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
-      <div className="flex flex-col gap-2">
+    <motion.form
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      onSubmit={onSubmit}
+      className="space-y-3"
+    >
+      <motion.div variants={staggerItem} className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <button type="button" className="btn-holo secondary" onClick={() => inputRef.current?.click()}>
+          <Button type="button" className="!bg-transparent !border-purple-500/50" onClick={() => inputRef.current?.click()}>
             Choose file
-          </button>
+          </Button>
           <span className="text-sm text-gray-600 truncate max-w-[12rem]">
             {file?.name ?? 'No file selected'}
           </span>
@@ -67,18 +76,20 @@ export default function UploadForm({ onUploaded }: { onUploaded?: () => void }) 
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </div>
-  <input className="input-neural" placeholder="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
-  <input className="input-neural" placeholder="Caption (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} />
-  <input className="input-neural" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
-        <select className="input-neural" value={albumId} onChange={(e) => setAlbumId(e.target.value)}>
-          <option value="">No album</option>
-          {albums.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-      </div>
-      <button type="submit" className="btn-holo primary disabled:opacity-50" disabled={!file || busy}>
-        {busy ? 'Uploading…' : 'Upload'}
-      </button>
-      {status && <p className="text-sm text-gray-600">{status}</p>}
-    </form>
+      </motion.div>
+      <motion.input variants={staggerItem} whileFocus={{ scale: 1.02 }} className="input-neural w-full" placeholder="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <motion.input variants={staggerItem} whileFocus={{ scale: 1.02 }} className="input-neural w-full" placeholder="Caption (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} />
+      <motion.input variants={staggerItem} whileFocus={{ scale: 1.02 }} className="input-neural w-full" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
+      <motion.select variants={staggerItem} whileFocus={{ scale: 1.02 }} className="input-neural w-full" value={albumId} onChange={(e) => setAlbumId(e.target.value)}>
+        <option value="">No album</option>
+        {albums.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+      </motion.select>
+      <motion.div variants={staggerItem}>
+        <Button type="submit" className="disabled:opacity-50 w-full" disabled={!file || busy}>
+          {busy ? 'Uploading…' : 'Upload'}
+        </Button>
+      </motion.div>
+      {status && <motion.p variants={fadeIn('up', 0.5)} className="text-sm text-gray-600">{status}</motion.p>}
+    </motion.form>
   )
 }

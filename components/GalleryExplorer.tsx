@@ -120,34 +120,34 @@ export default function GalleryExplorer({ initial }: { initial: { images: ImageR
   }, [q, tags, album, albums])
 
   return (
-    <div className="relative">
+    <div>
       {/* Controls */}
-      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-1 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1 flex flex-col md:flex-row items-center gap-3">
+          <div className="relative w-full md:w-auto md:flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={q}
               onChange={e => setQ(e.target.value)}
-              placeholder="Search by title, caption, tag..."
-              className="input-neural w-full pl-9"
+              placeholder="Search..."
+              className="input w-full pl-10"
             />
           </div>
-          <div className="relative w-52">
-            <Tags size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative w-full md:w-52">
+            <Tags size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={tags}
               onChange={e => setTags(e.target.value)}
-              placeholder="tag1, tag2"
-              className="input-neural w-full pl-9"
+              placeholder="Filter by tag"
+              className="input w-full pl-10"
             />
           </div>
-          <div className="relative w-44">
-            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative w-full md:w-48">
+            <Filter size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <select
               value={album}
               onChange={e => setAlbum(e.target.value)}
-              className="input-neural appearance-none w-full pl-9 pr-8"
+              className="input appearance-none w-full pl-10 pr-8"
             >
               <option value="">All albums</option>
               <option value="none">Unassigned</option>
@@ -155,38 +155,33 @@ export default function GalleryExplorer({ initial }: { initial: { images: ImageR
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
-            <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative w-40">
-            <SortAsc size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value as SortKey)}
-              className="input-neural appearance-none w-full pl-9 pr-8"
-            >
-              <option value="new">Newest</option>
-              <option value="liked">Most liked</option>
-              <option value="views">Most viewed</option>
-            </select>
-            <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-gray-500 text-sm">
-            <LayoutGrid size={16} />
-            <span>Grid</span>
-          </div>
+        <div className="relative w-full md:w-40">
+          <SortAsc size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value as SortKey)}
+            className="input appearance-none w-full pl-10 pr-8"
+          >
+            <option value="new">Newest</option>
+            <option value="liked">Most liked</option>
+            <option value="views">Most viewed</option>
+          </select>
+          <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
       </div>
 
       {/* Active filter chips */}
       {filterChips.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Active filters:</span>
           {filterChips.map((c, i) => (
-            <button key={i} className="glass-subtle rounded-2xl px-3 py-1.5 text-sm text-gray-700 hover:bg-white/80 transition" onClick={c.onClear} title="Clear">
+            <button key={i} className="chip" onClick={c.onClear} title="Clear">
               <span className="font-medium mr-1">{c.k}:</span> {c.v}
-              <span className="ml-2 text-gray-400">×</span>
+              <span className="ml-2 font-mono">×</span>
             </button>
           ))}
         </div>
@@ -200,14 +195,14 @@ export default function GalleryExplorer({ initial }: { initial: { images: ImageR
 
       {/* Loading indicator */}
       {loading && (
-        <div className="flex items-center justify-center py-6 text-gray-600">
+        <div className="flex items-center justify-center py-6 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading more…
         </div>
       )}
 
       {/* End message */}
       {!loading && images.length > 0 && !hasMore && (
-        <div className="text-center py-8 text-gray-500">You’ve reached the end.</div>
+        <div className="text-center py-8 text-muted-foreground">You’ve reached the end.</div>
       )}
     </div>
   )

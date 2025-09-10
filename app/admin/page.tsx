@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import UploadForm from '@/components/UploadForm'
+import { Button } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ui/LinkButton'
 import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn, Scissors } from 'lucide-react'
 
 type Album = { id: string; name: string; description?: string | null; _count?: { images: number } }
@@ -98,9 +100,9 @@ export default function AdminPage() {
           <Shield className="mx-auto mb-3 text-electric-blue" />
           <h2 className="font-heading text-2xl mb-2">Admin Access Required</h2>
           <p className="text-gray-600 mb-6">Please sign in with an admin account to use the dashboard.</p>
-          <button className="btn-holo primary inline-flex items-center gap-2" onClick={() => promptLogin('login')}>
+          <Button className="inline-flex items-center gap-2" onClick={() => promptLogin('login')}>
             <LogIn size={16} /> Sign in
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -113,9 +115,9 @@ export default function AdminPage() {
           <h1 className="font-heading text-3xl font-bold text-holographic">Admin Dashboard</h1>
           <p className="text-gray-600">Manage uploads, albums, images, and settings.</p>
         </div>
-        <button className="btn-holo ghost inline-flex items-center gap-2" onClick={refreshAll} disabled={loading}>
+        <Button className="inline-flex items-center gap-2 !bg-transparent !border-purple-500/50 text-muted-foreground hover:text-white" onClick={refreshAll} disabled={loading}>
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-        </button>
+        </Button>
       </div>
 
   {/* Dashboard Panels */}
@@ -133,9 +135,9 @@ export default function AdminPage() {
             <form onSubmit={createAlbum} className="space-y-3">
               <input className="input-neural w-full" placeholder="Album name" value={albumName} onChange={(e) => setAlbumName(e.target.value)} />
               <input className="input-neural w-full" placeholder="Description (optional)" value={albumDesc} onChange={(e) => setAlbumDesc(e.target.value)} />
-              <button className="btn-holo primary inline-flex items-center gap-2" disabled={creatingAlbum}>
+              <Button className="inline-flex items-center gap-2" disabled={creatingAlbum}>
                 <Plus size={16} /> Create
-              </button>
+              </Button>
             </form>
           </div>
 
@@ -149,7 +151,7 @@ export default function AdminPage() {
                   <p className="text-sm font-medium text-gray-800">Unassigned</p>
                   <p className="text-xs text-gray-500">Images with no album</p>
                 </div>
-                <a className="btn-holo ghost text-sm" href={`/gallery?album=none`}>View</a>
+                <LinkButton className="!bg-transparent !border-none !text-xs" href={`/gallery?album=none`}>View</LinkButton>
               </div>
               {albums.map(a => (
                 <div key={a.id} className="glass-subtle rounded-xl px-3 py-2 flex items-center justify-between">
@@ -157,7 +159,7 @@ export default function AdminPage() {
                     <p className="text-sm font-medium text-gray-800">{a.name}</p>
                     <p className="text-xs text-gray-500">{a._count?.images ?? 0} images</p>
                   </div>
-                  <a className="btn-holo ghost text-sm" href={`/gallery?album=${encodeURIComponent(a.id)}`}>View</a>
+                  <LinkButton className="!bg-transparent !border-none !text-xs" href={`/gallery?album=${encodeURIComponent(a.id)}`}>View</LinkButton>
                 </div>
               ))}
             </div>
@@ -192,12 +194,12 @@ export default function AdminPage() {
     <div className="card-quantum p-6">
           <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Shield size={18} /> Quick Links</h3>
           <div className="flex flex-wrap gap-2">
-            <a className="btn-holo ghost" href="/gallery">Open Gallery</a>
-            <a className="btn-holo ghost" href="/albums">Manage Albums</a>
-            <a className="btn-holo ghost" href="/">Homepage</a>
-      <a className="btn-holo secondary inline-flex items-center gap-2" href="/admin/editor" title="Open the image editor"><Scissors size={16}/> Image Editor</a>
-  <a className="btn-holo ghost" href="/admin/generator">AI Generate</a>
-  <a className="btn-holo ghost" href="/admin/palette">Theme</a>
+            <LinkButton className="!bg-transparent !border-none" href="/gallery">Open Gallery</LinkButton>
+            <LinkButton className="!bg-transparent !border-none" href="/albums">Manage Albums</LinkButton>
+            <LinkButton className="!bg-transparent !border-none" href="/">Homepage</LinkButton>
+            <LinkButton className="!bg-transparent !border-purple-500/50 inline-flex items-center gap-2" href="/admin/editor" title="Open the image editor"><Scissors size={16}/> Image Editor</LinkButton>
+            <LinkButton className="!bg-transparent !border-none" href="/admin/generator">AI Generate</LinkButton>
+            <LinkButton className="!bg-transparent !border-none" href="/admin/palette">Theme</LinkButton>
           </div>
         </div>
       </div>
@@ -240,15 +242,15 @@ export default function AdminPage() {
               <option value="__none__">No album</option>
               {albums.map(a => (<option key={a.id} value={a.id}>{a.name}</option>))}
             </select>
-            <button className="btn-holo secondary" onClick={async () => {
+            <Button className="!bg-transparent !border-purple-500/50 text-muted-foreground hover:text-white" onClick={async () => {
               if (!batchAlbum) return
               const ids = Object.entries(batchSelection).filter(([, v]) => v).map(([k]) => k)
               const toAlbumId = batchAlbum === '__none__' ? null : batchAlbum
               await Promise.all(ids.map(id => fetch('/api/images/edit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, albumId: toAlbumId }) })))
               setBatchSelection({})
               refreshAll()
-            }}>Move</button>
-            <button className="btn-holo ghost" onClick={() => setBatchSelection({})}>Clear</button>
+            }}>Move</Button>
+            <Button className="!bg-transparent !border-none text-muted-foreground hover:text-white" onClick={() => setBatchSelection({})}>Clear</Button>
           </div>
           <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto pr-1">
             {images.map(img => (

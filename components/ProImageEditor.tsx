@@ -5,6 +5,7 @@ import 'tui-image-editor/dist/tui-image-editor.css'
 import 'tui-color-picker/dist/tui-color-picker.css'
 // Ensure fabric is available on window for TUI Image Editor
 import * as fabricNS from 'fabric'
+import { Button } from './ui/Button'
 
 type ProImageEditorProps = {
   src: string
@@ -50,7 +51,7 @@ export default function ProImageEditor({ src, onSave, theme }: ProImageEditorPro
               'submenu.activeIcon.color': '#00d4ff',
             },
             menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text', 'mask', 'filter'],
-            uiSize: { width: '100%', height: '70vh' },
+            uiSize: { width: '100%', height: '100%' },
             menuBarPosition: 'bottom',
           },
           cssMaxWidth: 10000,
@@ -87,13 +88,13 @@ export default function ProImageEditor({ src, onSave, theme }: ProImageEditorPro
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 h-full flex flex-col">
       {error && (
         <div className="text-sm text-red-600">{error}</div>
       )}
-  <div ref={containerRef} className="w-full relative z-10 pointer-events-auto" />
-      <div className="flex gap-2">
-        <button className="btn-holo primary" onClick={handleSave}>Apply Changes</button>
+      <div ref={containerRef} className="w-full flex-1 relative z-10 pointer-events-auto" />
+      <div className="flex gap-2 pt-2">
+        <Button onClick={handleSave}>Apply Changes</Button>
       </div>
     </div>
   )
