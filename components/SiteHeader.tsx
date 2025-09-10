@@ -2,375 +2,127 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Camera, GalleryHorizontal, Upload, Menu, X, FolderOpen, LogIn, LogOut, Shield } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Camera, GalleryHorizontal, Menu, X, FolderOpen, LogIn, LogOut, Shield, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ui/LinkButton'
 
-function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: any }) {
+const mainNav = [
+  { href: '/gallery', label: 'Gallery', icon: GalleryHorizontal },
+  { href: '/albums', label: 'Albums', icon: FolderOpen },
+]
+
+function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname()
   const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href)
+  
   return (
     <Link
       href={href}
-      className={[
-        'nav-item inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-300 magnetic',
-        'group hover:scale-105 hover:shadow-xl',
-        isActive 
-          ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl' 
-          : 'text-gray-700 hover:text-blue-500 hover:bg-white/20 backdrop-blur-sm',
-      ].join(' ')}
+      className={`text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
     >
-      <Icon size={18} className="transition-transform duration-300 group-hover:rotate-12" /> 
-      <span className="hidden sm:inline">{label}</span>
+      {label}
     </Link>
   )
 }
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [authInitialTab, setAuthInitialTab] = useState<'login' | 'register'>('login')
   const [role, setRole] = useState<'ADMIN' | 'VIEWER'>('VIEWER')
   const [username, setUsername] = useState<string | null>(null)
 
   useEffect(() => {
-    // Read role and username from cookies on client
+    // This is a simplified way to get user info client-side.
+    // In a real app, this would likely come from a context or a session hook.
     const roleMatch = document.cookie.match(/(?:^|; )rbacRoleClient=([^;]+)/)
     const usernameMatch = document.cookie.match(/(?:^|; )rbacUsernameClient=([^;]+)/)
     
     if (roleMatch) setRole(decodeURIComponent(roleMatch[1]) === 'ADMIN' ? 'ADMIN' : 'VIEWER')
     if (usernameMatch) setUsername(decodeURIComponent(usernameMatch[1]))
   }, [])
-
-  // Allow other components to trigger the auth modal
-  useEffect(() => {
-    function onOpenAuth(e: Event) {
-      try {
-        const ce = e as CustomEvent<{ tab?: 'login' | 'register' }>
-        if (ce.detail?.tab) setAuthInitialTab(ce.detail.tab)
-      } catch {}
-      setAuthOpen(true)
-    }
-    window.addEventListener('visuauth:open', onOpenAuth as EventListener)
-    return () => window.removeEventListener('visuauth:open', onOpenAuth as EventListener)
-  }, [])
-
-  async function handleLogin(username: string, password: string): Promise<{ ok: boolean; message?: string }> {
-    try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) })
-      if (res.ok) {
-        const data = await res.json()
-        setRole(data.role === 'ADMIN' ? 'ADMIN' : 'VIEWER')
-        setUsername(username)
-        setAuthOpen(false)
-        location.reload()
-        return { ok: true }
-      }
-      let msg = 'Invalid credentials'
-      try {
-        const data = await res.json()
-        msg = (data && (data.error || data.message)) || msg
-      } catch {}
-      return { ok: false, message: msg }
-    } catch (e) {
-      return { ok: false, message: 'Network error. Please try again.' }
-    }
+  
+  const promptLogin = (tab: 'login' | 'register' = 'login') => {
+    window.dispatchEvent(new CustomEvent('visuauth:open', { detail: { tab } }))
   }
 
-  async function handleRegister(username: string, password: string): Promise<{ ok: boolean; message?: string }> {
-    try {
-      const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) })
-      if (res.ok) {
-        setRole('VIEWER')
-        setUsername(username)
-        setAuthOpen(false)
-        location.reload()
-        return { ok: true }
-      }
-      let msg = 'Registration failed'
-      try {
-        const data = await res.json()
-        msg = (data && (data.error || data.message)) || msg
-      } catch {}
-      return { ok: false, message: msg }
-    } catch (e) {
-      return { ok: false, message: 'Network error. Please try again.' }
-    }
-  }
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setAuthOpen(false)
-    }
-    if (authOpen) {
-      window.addEventListener('keydown', onKey)
-      return () => window.removeEventListener('keydown', onKey)
-    }
-  }, [authOpen])
-
-  async function handleLogout() {
+  const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    setRole('VIEWER')
-    setUsername(null)
     location.reload()
   }
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-white/20 backdrop-blur-heavy">
-      <div className="container flex h-16 items-center justify-between">
-        {/* Brand */}
-        <Link href="/" className="group flex items-center gap-3 transition-transform duration-300 hover:scale-105">
-          <div className="relative">
-            <div className="rounded-xl bg-aurora-primary p-2.5 text-white shadow-aurora-glow">
-              <Camera size={20} />
-            </div>
-          </div>
-          <span className="font-display text-xl font-bold text-holographic">VisuaLab</span>
-        </Link>
-
-        {/* Navbar */}
-        <nav className="hidden md:flex items-center gap-1">
-          <NavLink href="/" label="Home" icon={GalleryHorizontal} />
-          <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
-          <NavLink href="/albums" label="Albums" icon={FolderOpen} />
-        </nav>
-
-        {/* Right actions */}
-        <div className="hidden items-center gap-2 md:flex">
-          {role === 'ADMIN' && (
-            <>
-              <Link href="/admin" className="btn-holo secondary group">
-                <Shield size={18} className="transition-transform duration-300 group-hover:rotate-12" /> 
-                <span>Admin</span>
-              </Link>
-            </>
-          )}
-          
-          {username ? (
-            <div className="flex items-center gap-3">
-              <div className="glass-strong rounded-2xl px-4 py-2.5 transition-all duration-300 hover:shadow-aurora-glow">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-electric-blue">@</span>
-                  <span className="font-mono font-medium text-gray-700">{username}</span>
-                  <span className="rounded-full bg-aurora-primary px-2 py-0.5 text-xs text-white font-medium animate-glow-pulse">
-                    {role}
-                  </span>
-                </div>
-              </div>
-              <button 
-                onClick={handleLogout} 
-                className="btn-holo ghost group"
-              >
-                <LogOut size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
-                <span>Logout</span>
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} 
-                className="btn-holo ghost group"
-              >
-                <LogIn size={18} className="transition-transform duration-300 group-hover:scale-110" /> 
-                <span>Login</span>
-              </button>
-              <button 
-                onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} 
-                className="btn-holo primary group"
-              >
-                <span>Join Lab</span>
-              </button>
-            </div>
-          )}
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <motion.div whileHover={{ rotate: -15, scale: 1.1 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Camera className="h-6 w-6" />
+            </motion.div>
+            <span className="hidden font-bold sm:inline-block">VisuaLab</span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            {mainNav.map(item => <NavLink key={item.href} {...item} />)}
+          </nav>
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          aria-label="Toggle menu"
-          className="md:hidden btn-holo ghost p-3"
-          onClick={() => setOpen((v) => !v)}
+        {/* Mobile Menu Button */}
+        <Button
+          className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:ring-0 md:hidden !p-2 !bg-transparent !border-none"
+          onClick={() => setOpen(o => !o)}
         >
-          {open ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
+          <motion.div animate={{ rotate: open ? 15 : 0 }} transition={{ type: 'spring', stiffness: 300 }}>
+            <Camera className="h-6 w-6" />
+          </motion.div>
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+        
+        {/* Mobile Menu */}
+        {open && (
+          <div className="fixed inset-0 top-14 z-50 grid h-[calc(100vh-3.5rem)] grid-flow-row auto-rows-max overflow-auto p-6 pb-32 shadow-md animate-in slide-in-from-bottom-80 md:hidden">
+            <div className="relative z-20 grid gap-6 rounded-md bg-popover p-4 text-popover-foreground shadow-md">
+              <Link href="/" className="flex items-center space-x-2">
+                <span className="font-bold">VisuaLab</span>
+              </Link>
+              <nav className="grid grid-flow-row auto-rows-max text-sm">
+                {mainNav.map(item => (
+                  <Link key={item.href} href={item.href} className="flex w-full items-center rounded-md p-2 text-sm font-medium hover:underline">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </div>
+        )}
 
-      {/* Mobile Navigation Panel */}
-      {open && (
-        <div className="md:hidden glass-strong border-t border-white/20">
-          <div className="container flex flex-col gap-3 py-6">
-            <NavLink href="/" label="Home" icon={GalleryHorizontal} />
-            <NavLink href="/gallery" label="Gallery" icon={GalleryHorizontal} />
-            <NavLink href="/albums" label="Albums" icon={FolderOpen} />
-            
-            {role === 'ADMIN' && (
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          <nav className="flex items-center space-x-2">
+            {username ? (
               <>
-                <Link href="/admin" className="btn-holo secondary">
-                  <Shield size={18} /> Admin
-                </Link>
+                {role === 'ADMIN' && (
+                  <LinkButton href="/admin" className="!bg-transparent !border-none text-muted-foreground hover:text-white">
+                    <Shield size={16} className="mr-2" /> Admin
+                  </LinkButton>
+                )}
+                <span className="text-sm text-muted-foreground hidden sm:inline">@{username}</span>
+                <Button onClick={handleLogout} className="!bg-transparent !border-none text-muted-foreground hover:text-white">
+                  <LogOut size={16} className="mr-2" />
+                  <span className="hidden sm:inline">Logout</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={() => promptLogin('login')} className="!bg-transparent !border-none text-muted-foreground hover:text-white">
+                  <LogIn size={16} className="mr-2" /> Login
+                </Button>
+                <Button onClick={() => promptLogin('register')}>
+                  Sign Up
+                </Button>
               </>
             )}
-            
-            {username ? (
-              <div className="flex flex-col gap-3">
-                <div className="glass-strong rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-electric-blue">@</span>
-                    <span className="font-mono font-medium text-gray-700">{username}</span>
-                    <span className="rounded-full bg-aurora-primary px-2 py-1 text-xs text-white font-medium">
-                      {role}
-                    </span>
-                  </div>
-                </div>
-                <button onClick={handleLogout} className="btn-holo ghost justify-start">
-                  <LogOut size={18} /> Logout
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <button onClick={() => { setAuthInitialTab('login'); setAuthOpen(true) }} className="btn-holo ghost justify-start">
-                  <LogIn size={18} /> Login
-                </button>
-                <button onClick={() => { setAuthInitialTab('register'); setAuthOpen(true) }} className="btn-holo primary justify-start">
-                  Join Lab
-                </button>
-              </div>
-            )}
-          </div>
+          </nav>
         </div>
-      )}
-
-  {/* Auth Modal */}
-      {authOpen && (
-        <div className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-void-black/60 backdrop-blur-sm p-4" onMouseDown={() => setAuthOpen(false)}>
-          <div 
-            className="card-quantum w-full max-w-md my-auto p-8 animate-cosmic-entrance" 
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-holographic">
-                Welcome to the Lab
-              </h2>
-              <button 
-                onClick={() => setAuthOpen(false)} 
-                className="btn-holo ghost p-2"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <AuthTabs initialTab={authInitialTab} onLogin={handleLogin} onRegister={handleRegister} />
-            
-            <div className="mt-6 border-t border-white/20 pt-6">
-              <p className="text-center text-xs text-gray-500 mb-3">✨ Demo Admin Portal:</p>
-              <div className="glass-subtle rounded-xl p-4 text-center text-xs space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Username:</span>
-                  <span className="font-mono font-medium text-electric-blue">CloneFest2025</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Password:</span>
-                  <span className="font-mono font-medium text-neon-pink">CloneFest2025</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </header>
-  )
-}
-
-function AuthForm({ onSubmit, cta = 'Enter Lab' }: { onSubmit: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; cta?: string }) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    const res = await onSubmit(username, password)
-    if (!res.ok) setError(res.message || 'Something went wrong')
-    setLoading(false)
-  }
-  
-  return (
-    <form onSubmit={submit} className="space-y-4">
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">Username</label>
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="input-neural w-full"
-          placeholder="Enter your username"
-          autoComplete="username"
-          required
-        />
-      </div>
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="input-neural w-full"
-          placeholder="Enter your password"
-          autoComplete={cta === 'Join Lab' ? 'new-password' : 'current-password'}
-          required
-        />
-      </div>
-      {error && (
-        <div className="glass-subtle rounded-xl p-3 border border-red-300">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-      <button 
-        disabled={loading} 
-        className="btn-holo primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loading ? `${cta}...` : cta}
-      </button>
-    </form>
-  )
-}
-
-function AuthTabs({ initialTab = 'login', onLogin, onRegister }: { 
-  initialTab?: 'login' | 'register'; 
-  onLogin: (u: string, p: string) => Promise<{ ok: boolean; message?: string }>; 
-  onRegister: (u: string, p: string) => Promise<{ ok: boolean; message?: string }> 
-}) {
-  const [tab, setTab] = useState<'login' | 'register'>(initialTab)
-  
-  return (
-    <div>
-      <div className="mb-6 grid grid-cols-2 gap-2 glass-subtle rounded-2xl p-2">
-        <button 
-          onClick={() => setTab('login')} 
-          className={`rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
-            tab === 'login' 
-              ? 'bg-aurora-primary text-white shadow-aurora-glow' 
-              : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'
-          }`}
-        >
-          Sign In
-        </button>
-        <button 
-          onClick={() => setTab('register')} 
-          className={`rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
-            tab === 'register' 
-              ? 'bg-aurora-primary text-white shadow-aurora-glow' 
-              : 'text-gray-600 hover:text-electric-blue hover:bg-white/20'
-          }`}
-        >
-          Join Lab
-        </button>
-      </div>
-      
-      {tab === 'login' ? (
-        <AuthForm onSubmit={onLogin} cta="Enter Lab" />
-      ) : (
-        <AuthForm onSubmit={onRegister} cta="Join Lab" />
-      )}
-    </div>
   )
 }
