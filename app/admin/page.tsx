@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import UploadForm from '@/components/UploadForm'
 import { Button } from '@/components/ui/Button'
 import { LinkButton } from '@/components/ui/LinkButton'
-import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn, Scissors } from 'lucide-react'
+import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn, Scissors, BarChart2 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 type Album = { id: string; name: string; description?: string | null; _count?: { images: number } }
 type ImageLite = { id: string; title?: string | null; thumbUrl?: string | null }
@@ -96,10 +97,10 @@ export default function AdminPage() {
   if (!loggedIn || role !== 'ADMIN') {
     return (
       <div className="container py-12">
-        <div className="card-quantum max-w-md mx-auto p-8 text-center">
-          <Shield className="mx-auto mb-3 text-electric-blue" />
+        <div className="max-w-md mx-auto p-8 text-center rounded-2xl bg-card shadow-lg">
+          <Shield className="mx-auto mb-3 text-primary" />
           <h2 className="font-heading text-2xl mb-2">Admin Access Required</h2>
-          <p className="text-gray-600 mb-6">Please sign in with an admin account to use the dashboard.</p>
+          <p className="text-muted-foreground mb-6">Please sign in with an admin account to use the dashboard.</p>
           <Button className="inline-flex items-center gap-2" onClick={() => promptLogin('login')}>
             <LogIn size={16} /> Sign in
           </Button>
@@ -110,158 +111,162 @@ export default function AdminPage() {
 
   return (
     <div className="container py-8">
+      {/* Welcome Header */}
+      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10">
+        <h1 className="font-heading text-3xl font-bold">Welcome, Admin</h1>
+  <p className="text-muted-foreground">Here&apos;s a snapshot of your VisuaLab.</p>
+      </div>
+      
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-holographic">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage uploads, albums, images, and settings.</p>
-        </div>
-        <Button className="inline-flex items-center gap-2 !bg-transparent !border-purple-500/50 text-muted-foreground hover:text-white" onClick={refreshAll} disabled={loading}>
+        <h2 className="font-heading text-2xl font-bold">Command Center</h2>
+  <Button className="inline-flex items-center gap-2" onClick={refreshAll} disabled={loading}>
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
         </Button>
       </div>
 
-  {/* Dashboard Panels */}
-  <div className="glass-strong rounded-2xl p-4">
-        <div className="grid md:grid-cols-4 gap-4">
-          {/* Upload */}
-          <div className="card-quantum p-4">
-            <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Images size={18} /> Upload Images</h3>
-            <UploadForm onUploaded={refreshAll} />
-          </div>
-
-          {/* Create Album */}
-          <div className="card-quantum p-4">
-            <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><FolderOpen size={18} /> Create Album</h3>
-            <form onSubmit={createAlbum} className="space-y-3">
-              <input className="input-neural w-full" placeholder="Album name" value={albumName} onChange={(e) => setAlbumName(e.target.value)} />
-              <input className="input-neural w-full" placeholder="Description (optional)" value={albumDesc} onChange={(e) => setAlbumDesc(e.target.value)} />
-              <Button className="inline-flex items-center gap-2" disabled={creatingAlbum}>
-                <Plus size={16} /> Create
-              </Button>
-            </form>
-          </div>
-
-          {/* Albums list */}
-          <div className="card-quantum p-4">
-            <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><FolderOpen size={18} /> Albums</h3>
-            <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
-              {albums.length === 0 && <p className="text-sm text-gray-500">No albums yet.</p>}
-              <div className="glass-subtle rounded-xl px-3 py-2 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">Unassigned</p>
-                  <p className="text-xs text-gray-500">Images with no album</p>
-                </div>
-                <LinkButton className="!bg-transparent !border-none !text-xs" href={`/gallery?album=none`}>View</LinkButton>
-              </div>
-              {albums.map(a => (
-                <div key={a.id} className="glass-subtle rounded-xl px-3 py-2 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{a.name}</p>
-                    <p className="text-xs text-gray-500">{a._count?.images ?? 0} images</p>
-                  </div>
-                  <LinkButton className="!bg-transparent !border-none !text-xs" href={`/gallery?album=${encodeURIComponent(a.id)}`}>View</LinkButton>
-                </div>
-              ))}
+      {/* Dashboard Grid */}
+      <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {/* Left Column */}
+        <div className="md:col-span-1 lg:col-span-1 space-y-6">
+          {/* Quick Actions */}
+          <div className="p-4 rounded-2xl bg-card shadow">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><Plus size={18} /> Quick Actions</h3>
+            <div className="space-y-3">
+              <UploadForm onUploaded={refreshAll} />
+              <form onSubmit={createAlbum} className="space-y-3">
+                <input className="input w-full" placeholder="New album name" value={albumName} onChange={(e) => setAlbumName(e.target.value)} />
+                <Button className="w-full inline-flex items-center gap-2" disabled={creatingAlbum}>
+                  <FolderOpen size={16} /> Create Album
+                </Button>
+              </form>
             </div>
           </div>
+          
+          {/* Navigation */}
+          <div className="p-4 rounded-2xl bg-card shadow">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><Settings size={18} /> Navigation</h3>
+            <div className="flex flex-col space-y-2">
+              <LinkButton href="/gallery">Open Gallery</LinkButton>
+              <LinkButton href="/albums">Manage Albums</LinkButton>
+              <LinkButton href="/admin/editor">Image Editor</LinkButton>
+              <LinkButton href="/admin/generator">AI Generator</LinkButton>
+              <LinkButton href="/admin/palette">Theme Editor</LinkButton>
+            </div>
+          </div>
+        </div>
 
+        {/* Center Column */}
+        <div className="md:col-span-2 lg:col-span-2 space-y-6">
+          {/* Analytics */}
+          <div className="p-4 rounded-2xl bg-card shadow">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><BarChart2 size={18} /> Analytics</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2 text-center">Top Viewed</h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={analytics.topViews} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="id" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickFormatter={(val) => `ID ${val.slice(-4)}`} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--popover))',
+                        borderColor: 'hsl(var(--border))',
+                        color: 'hsl(var(--popover-foreground))'
+                      }}
+                      labelFormatter={(val) => `Image ID: ${val}`}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2 text-center">Top Liked</h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={analytics.topLikes} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="id" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickFormatter={(val) => `ID ${val.slice(-4)}`} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--popover))',
+                        borderColor: 'hsl(var(--border))',
+                        color: 'hsl(var(--popover-foreground))'
+                      }}
+                      labelFormatter={(val) => `Image ID: ${val}`}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          
           {/* Recent Images */}
-          <div className="card-quantum p-4">
-            <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Images size={18} /> Recent Images</h3>
-            <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
-              {images.length === 0 && <p className="text-sm text-gray-500 col-span-3">No images yet.</p>}
-              {images.map(img => (
-                <a key={img.id} className="block text-left" href={`/admin/editor?imageId=${encodeURIComponent(img.id)}`}>
-                  <img src={img.thumbUrl ?? ''} alt={img.title ?? ''} className="w-full h-20 object-cover rounded-lg" />
-                  <div className="mt-1 truncate text-xs text-gray-600">{img.title ?? 'Untitled'}</div>
+          <div className="p-4 rounded-2xl bg-card shadow">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><Images size={18} /> Recent Images</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {images.slice(0, 10).map(img => (
+                <a key={img.id} className="block text-left group" href={`/admin/editor?imageId=${encodeURIComponent(img.id)}`}>
+                  <img src={img.thumbUrl ?? ''} alt={img.title ?? ''} className="w-full h-24 object-cover rounded-lg transition-transform group-hover:scale-105" />
+                  <div className="mt-1 truncate text-xs text-muted-foreground">{img.title ?? 'Untitled'}</div>
                 </a>
               ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Settings & Info */}
-      <div className="grid md:grid-cols-2 gap-4 mt-6">
-        <div className="card-quantum p-6">
-          <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Settings size={18} /> Platform Settings</h3>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>Roles: Admin, Editor, Visitor</li>
-            <li>Moderation: comments (MAPTCHA), likes per-user</li>
-            <li>Storage: R2 signing with public fallback</li>
-          </ul>
-        </div>
-    <div className="card-quantum p-6">
-          <h3 className="font-heading text-lg mb-3 flex items-center gap-2"><Shield size={18} /> Quick Links</h3>
-          <div className="flex flex-wrap gap-2">
-            <LinkButton className="!bg-transparent !border-none" href="/gallery">Open Gallery</LinkButton>
-            <LinkButton className="!bg-transparent !border-none" href="/albums">Manage Albums</LinkButton>
-            <LinkButton className="!bg-transparent !border-none" href="/">Homepage</LinkButton>
-            <LinkButton className="!bg-transparent !border-purple-500/50 inline-flex items-center gap-2" href="/admin/editor" title="Open the image editor"><Scissors size={16}/> Image Editor</LinkButton>
-            <LinkButton className="!bg-transparent !border-none" href="/admin/generator">AI Generate</LinkButton>
-            <LinkButton className="!bg-transparent !border-none" href="/admin/palette">Theme</LinkButton>
+        {/* Right Column */}
+        <div className="md:col-span-3 lg:col-span-1 space-y-6">
+          {/* Albums list */}
+          <div className="p-4 rounded-2xl bg-card shadow">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><FolderOpen size={18} /> Albums</h3>
+            <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+              {albums.length === 0 && <p className="text-sm text-muted-foreground">No albums yet.</p>}
+              {albums.map(a => (
+                <div key={a.id} className="bg-background/50 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{a.name}</p>
+                    <p className="text-xs text-muted-foreground">{a._count?.images ?? 0} images</p>
+                  </div>
+                  <LinkButton className="text-xs px-2 py-1" href={`/gallery?album=${encodeURIComponent(a.id)}`}>View</LinkButton>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Analytics + Batch Ops */}
-      <div className="grid md:grid-cols-2 gap-4 mt-4">
-        <div className="card-quantum p-6">
-          <h3 className="font-heading text-lg mb-3">Top Images</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">By Views</h4>
-              <div className="space-y-2">
-                {analytics.topViews.map(v => (
-                  <div key={v.id} className="flex items-center gap-2">
-                    <img src={v.thumbUrl ?? ''} className="w-10 h-10 object-cover rounded" />
-                    <span className="text-sm text-gray-700">{v.count} views</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">By Likes</h4>
-              <div className="space-y-2">
-                {analytics.topLikes.map(v => (
-                  <div key={v.id} className="flex items-center gap-2">
-                    <img src={v.thumbUrl ?? ''} className="w-10 h-10 object-cover rounded" />
-                    <span className="text-sm text-gray-700">{v.count} likes</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* Batch Operations */}
+      <div className="mt-8 p-6 rounded-2xl bg-card shadow">
+        <h3 className="font-heading text-xl mb-4">Batch Operations</h3>
+        <div className="mb-3 text-sm text-muted-foreground">Select images below to move or apply other actions.</div>
+        <div className="flex items-center gap-3 mb-4">
+          <select className="input" value={batchAlbum} onChange={(e) => setBatchAlbum(e.target.value)}>
+            <option value="">Move to album...</option>
+            <option value="__none__">Unassign album</option>
+            {albums.map(a => (<option key={a.id} value={a.id}>{a.name}</option>))}
+          </select>
+          <Button onClick={async () => {
+            if (!batchAlbum) return
+            const ids = Object.entries(batchSelection).filter(([, v]) => v).map(([k]) => k)
+            const toAlbumId = batchAlbum === '__none__' ? null : batchAlbum
+            await Promise.all(ids.map(id => fetch('/api/images/edit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, albumId: toAlbumId }) })))
+            setBatchSelection({})
+            refreshAll()
+          }}>Move Selected</Button>
+          <Button onClick={() => setBatchSelection({})} className="!bg-transparent !border-none text-muted-foreground hover:text-white">Clear Selection</Button>
         </div>
-        <div className="card-quantum p-6">
-          <h3 className="font-heading text-lg mb-3">Batch Operations</h3>
-          <div className="mb-3 text-sm text-gray-600">Select images below to move/edit/delete.</div>
-          <div className="flex items-center gap-2 mb-3">
-            <select className="input-neural" value={batchAlbum} onChange={(e) => setBatchAlbum(e.target.value)}>
-              <option value="">Move to album...</option>
-              <option value="__none__">No album</option>
-              {albums.map(a => (<option key={a.id} value={a.id}>{a.name}</option>))}
-            </select>
-            <Button className="!bg-transparent !border-purple-500/50 text-muted-foreground hover:text-white" onClick={async () => {
-              if (!batchAlbum) return
-              const ids = Object.entries(batchSelection).filter(([, v]) => v).map(([k]) => k)
-              const toAlbumId = batchAlbum === '__none__' ? null : batchAlbum
-              await Promise.all(ids.map(id => fetch('/api/images/edit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, albumId: toAlbumId }) })))
-              setBatchSelection({})
-              refreshAll()
-            }}>Move</Button>
-            <Button className="!bg-transparent !border-none text-muted-foreground hover:text-white" onClick={() => setBatchSelection({})}>Clear</Button>
-          </div>
-          <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto pr-1">
-            {images.map(img => (
-              <label key={img.id} className="relative block cursor-pointer">
-                <input type="checkbox" className="absolute left-1 top-1 z-10" checked={!!batchSelection[img.id]} onChange={(e) => setBatchSelection(s => ({ ...s, [img.id]: e.target.checked }))} />
-                <img src={img.thumbUrl ?? ''} alt="" className="w-full h-16 object-cover rounded" />
-              </label>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 max-h-60 overflow-y-auto pr-1">
+          {images.map(img => (
+            <label key={img.id} className="relative block cursor-pointer group">
+              <input type="checkbox" className="absolute left-2 top-2 z-10 h-5 w-5" checked={!!batchSelection[img.id]} onChange={(e) => setBatchSelection(s => ({ ...s, [img.id]: e.target.checked }))} />
+              <img src={img.thumbUrl ?? ''} alt="" className={`w-full h-24 object-cover rounded-lg transition-all ${batchSelection[img.id] ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'group-hover:opacity-80'}`} />
+            </label>
+          ))}
         </div>
       </div>
+ 
 
   {/* Editor drawer removed; use /admin/editor instead */}
     </div>
