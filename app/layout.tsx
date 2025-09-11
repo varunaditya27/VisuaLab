@@ -6,6 +6,7 @@ import SiteFooter from '@/components/SiteFooter'
 import PageTransition from '@/components/PageTransition'
 import AnimatedBackground from '@/components/AnimatedBackground'
 import AuthModal from '@/components/AuthModal'
+import { Toaster } from '@/components/ui/Toaster'
 
 const fontSans = Lato({
   subsets: ['latin'],
@@ -38,7 +39,7 @@ export default function RootLayout({
     <html lang="en" className={`dark ${fontSans.variable} ${fontHeading.variable}`}>
       <body className="min-h-dvh bg-transparent text-foreground antialiased flex flex-col">
         <AnimatedBackground />
-        <div className="flex flex-col min-h-dvh">
+  <div className="flex flex-col min-h-dvh relative z-0">
           <SiteHeader />
           <AuthModal />
           <main className="flex-1">
@@ -48,6 +49,7 @@ export default function RootLayout({
           </main>
           <SiteFooter />
         </div>
+        <Toaster />
       </body>
     </html>
   )

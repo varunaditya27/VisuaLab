@@ -161,7 +161,7 @@ export default function UploadPage() {
           <motion.div
             className={`
               card-quantum p-12 text-center mb-8 transition-all duration-500 cursor-pointer
-              ${isDragOver ? 'scale-105 shadow-aurora-glow' : 'hover:scale-[1.02]'}
+              ${isDragOver ? 'scale-105 shadow-lg shadow-primary/50' : 'hover:scale-[1.02]'}
             `}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -188,8 +188,8 @@ export default function UploadPage() {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="flex flex-col items-center"
                 >
-                  <div className="w-20 h-20 rounded-full bg-aurora-primary flex items-center justify-center mb-4 animate-glow-pulse">
-                    <Zap size={32} className="text-white" />
+                  <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 animate-pulse">
+                    <Zap size={32} className="text-primary-foreground" />
                   </div>
                   <h3 className="font-heading text-xl font-bold text-holographic mb-2">
                     Release to Upload!
@@ -286,7 +286,7 @@ export default function UploadPage() {
                         {/* Progress Bar */}
                         <div className="mt-2 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                           <motion.div
-                            className="h-full bg-aurora-primary"
+                            className="h-full bg-primary"
                             initial={{ width: 0 }}
                             animate={{ width: `${fileObj.progress}%` }}
                             transition={{ duration: 0.3 }}

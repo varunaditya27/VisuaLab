@@ -3,8 +3,62 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { X, Loader2 } from 'lucide-react'
 
 type Tab = 'login' | 'register'
+
+function AuthForm({ tab, loading }: { tab: Tab, loading: boolean }) {
+  const variants = {
+    hidden: (direction: number) => ({ opacity: 0, x: direction * 200 }),
+    visible: { opacity: 1, x: 0 },
+    exit: (direction: number) => ({ opacity: 0, x: direction * -200 })
+  }
+  const direction = tab === 'login' ? 1 : -1
+
+  return (
+    <motion.div
+      key={tab}
+      custom={direction}
+      variants={variants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      transition={{ type: 'tween', ease: 'easeInOut', duration: 0.3 }}
+      className="space-y-4"
+    >
+      <div className="space-y-1">
+        <label htmlFor="username" className="text-sm font-medium text-muted-foreground">
+          Username
+        </label>
+        <Input
+          id="username"
+          name="username"
+          type="text"
+          required
+          placeholder="yourname"
+          autoComplete="username"
+          disabled={loading}
+        />
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+          Password
+        </label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          required
+          placeholder="••••••••"
+          autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+          disabled={loading}
+        />
+      </div>
+    </motion.div>
+  )
+}
+
 
 export default function AuthModal() {
   const [open, setOpen] = useState(false)
@@ -52,12 +106,10 @@ export default function AuthModal() {
         setError(json?.error || 'Something went wrong')
         return
       }
-      // Close and refresh to reflect new cookies/role
       setOpen(false)
-      // Small delay to allow modal exit animation
       setTimeout(() => {
         if (typeof window !== 'undefined') window.location.reload()
-      }, 150)
+      }, 300)
     } catch (err) {
       setError('Network error')
     } finally {
@@ -73,94 +125,76 @@ export default function AuthModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <div
-            className="absolute inset-0 bg-black/60"
+          <motion.div
+            className="absolute inset-0 bg-background/80 backdrop-blur-md"
             onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             aria-hidden
           />
           <motion.div
-            className="relative z-[101] w-full max-w-sm rounded-xl border bg-background p-6 shadow-2xl"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
+            className="relative z-[101] w-full max-w-sm rounded-2xl border bg-popover p-6 shadow-2xl"
+            initial={{ y: 20, scale: 0.95, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 20, scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="auth-modal-title"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="auth-modal-title" className="text-lg font-semibold">
-                {tab === 'login' ? 'Sign in' : 'Create account'}
+            <div className="mb-6 flex flex-col text-center">
+              <h2 id="auth-modal-title" className="font-heading text-2xl font-bold">
+                {tab === 'login' ? 'Welcome Back' : 'Join VisuaLab'}
               </h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground"
-                aria-label="Close"
-              >
-                ✕
-              </button>
+              <p className="text-muted-foreground text-sm mt-1">
+                {tab === 'login' ? 'Sign in to access your gallery.' : 'Create an account to get started.'}
+              </p>
             </div>
+            
+            <Button
+              onClick={() => setOpen(false)}
+              variant="ghost"
+              className="absolute top-3 right-3 !h-8 !w-8 !p-0"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </Button>
 
-            <div className="mb-4 grid grid-cols-2 gap-2">
+            <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
               <Button
                 onClick={() => setTab('login')}
-                className={
-                  tab === 'login'
-                    ? 'w-full'
-                    : 'w-full !bg-transparent !border-purple-500/50 text-muted-foreground'
-                }
+                variant={tab === 'login' ? 'primary' : 'ghost'}
+                className="w-full"
               >
                 Login
               </Button>
               <Button
                 onClick={() => setTab('register')}
-                className={
-                  tab === 'register'
-                    ? 'w-full'
-                    : 'w-full !bg-transparent !border-purple-500/50 text-muted-foreground'
-                }
+                variant={tab === 'register' ? 'primary' : 'ghost'}
+                className="w-full"
               >
                 Sign Up
               </Button>
             </div>
 
-            <form onSubmit={submit} className="space-y-3">
-              <div className="space-y-1">
-                <label htmlFor="username" className="text-sm text-muted-foreground">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  className="w-full rounded-md border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500/40"
-                  placeholder="yourname"
-                  autoComplete="username"
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="password" className="text-sm text-muted-foreground">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="w-full rounded-md border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500/40"
-                  placeholder="••••••••"
-                  autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
-                />
+            <form onSubmit={submit} className="space-y-4">
+              <div className="overflow-hidden relative h-[160px]">
+                <AnimatePresence initial={false} custom={tab} mode="popLayout">
+                    <AuthForm tab={tab} loading={loading} />
+                </AnimatePresence>
               </div>
 
               {error && (
-                <p className="text-sm text-red-400" role="alert">
+                <p className="text-sm text-destructive text-center" role="alert">
                   {error}
                 </p>
               )}
 
               <Button type="submit" disabled={loading} className="w-full">
+                {loading && <Loader2 size={16} className="mr-2 animate-spin" />}
                 {loading ? (tab === 'login' ? 'Signing in…' : 'Creating…') : tab === 'login' ? 'Sign in' : 'Create account'}
               </Button>
             </form>
