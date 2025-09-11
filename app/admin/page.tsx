@@ -255,7 +255,7 @@ export default function AdminPage() {
             setBatchSelection({})
             refreshAll()
           }}>Move Selected</Button>
-          <Button onClick={() => setBatchSelection({})} className="!bg-transparent !border-none text-muted-foreground hover:text-white">Clear Selection</Button>
+          <Button onClick={() => setBatchSelection({})} className="bg-transparent !border-none text-muted-foreground hover:text-white">Clear Selection</Button>
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 max-h-60 overflow-y-auto pr-1">
           {images.map(img => (

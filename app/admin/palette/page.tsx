@@ -1,32 +1,45 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Button } from '@/components/ui/Button'
 import { presetPalettes } from '@/lib/palettes'
+import { toast } from '@/lib/toast'
+import Loader from '@/components/ui/Loader'
 
 type Palette = { id: string; name: string; json: Record<string, string> }
 
-const KEYS: Array<{ key: string; label: string }> = [
-  { key: '--background', label: 'Background' },
-  { key: '--foreground', label: 'Foreground' },
-  { key: '--card', label: 'Card' },
-  { key: '--card-foreground', label: 'Card Foreground' },
-  { key: '--popover', label: 'Popover' },
-  { key: '--popover-foreground', label: 'Popover Foreground' },
-  { key: '--primary', label: 'Primary' },
-  { key: '--primary-foreground', label: 'Primary Foreground' },
-  { key: '--secondary', label: 'Secondary' },
-  { key: '--secondary-foreground', label: 'Secondary Foreground' },
-  { key: '--muted', label: 'Muted' },
-  { key: '--muted-foreground', label: 'Muted Foreground' },
-  { key: '--accent', label: 'Accent' },
-  { key: '--accent-foreground', label: 'Accent Foreground' },
-  { key: '--destructive', label: 'Destructive' },
-  { key: '--destructive-foreground', label: 'Destructive Foreground' },
-  { key: '--border', label: 'Border' },
-  { key: '--input', label: 'Input' },
-  { key: '--ring', label: 'Ring' },
+// Grouped keys for a cleaner, less overwhelming UI
+const GROUPS: Array<{ title: string; keys: Array<{ key: string; label: string; pairWith?: string }> }> = [
+  { title: 'Base', keys: [
+    { key: '--background', label: 'Background', pairWith: '--foreground' },
+    { key: '--foreground', label: 'Foreground', pairWith: '--background' },
+  ]},
+  { title: 'Surfaces', keys: [
+    { key: '--card', label: 'Card', pairWith: '--card-foreground' },
+    { key: '--card-foreground', label: 'Card Foreground', pairWith: '--card' },
+    { key: '--popover', label: 'Popover', pairWith: '--popover-foreground' },
+    { key: '--popover-foreground', label: 'Popover Foreground', pairWith: '--popover' },
+  ]},
+  { title: 'Primary & Secondary', keys: [
+    { key: '--primary', label: 'Primary', pairWith: '--primary-foreground' },
+    { key: '--primary-foreground', label: 'Primary Foreground', pairWith: '--primary' },
+    { key: '--secondary', label: 'Secondary', pairWith: '--secondary-foreground' },
+    { key: '--secondary-foreground', label: 'Secondary Foreground', pairWith: '--secondary' },
+  ]},
+  { title: 'Accent & Muted', keys: [
+    { key: '--accent', label: 'Accent', pairWith: '--accent-foreground' },
+    { key: '--accent-foreground', label: 'Accent Foreground', pairWith: '--accent' },
+    { key: '--muted', label: 'Muted', pairWith: '--muted-foreground' },
+    { key: '--muted-foreground', label: 'Muted Foreground', pairWith: '--muted' },
+  ]},
+  { title: 'Feedback & Utility', keys: [
+    { key: '--destructive', label: 'Destructive', pairWith: '--destructive-foreground' },
+    { key: '--destructive-foreground', label: 'Destructive Foreground', pairWith: '--destructive' },
+    { key: '--border', label: 'Border' },
+    { key: '--input', label: 'Input' },
+    { key: '--ring', label: 'Ring' },
+  ]},
 ]
 
 export default function PaletteEditorPage() {
@@ -34,6 +47,10 @@ export default function PaletteEditorPage() {
   const [name, setName] = useState('My Theme')
   const [values, setValues] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string>('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(GROUPS.map(g => g.title)))
+  const [initialSnapshot, setInitialSnapshot] = useState<Record<string, string>>({})
 
   const loggedIn = useMemo(() => {
     if (typeof document === 'undefined') return false
@@ -43,6 +60,16 @@ export default function PaletteEditorPage() {
 
   useEffect(() => {
     fetch('/api/palettes').then(r => r.json()).then(d => setPalettes(d.palettes || [])).catch(() => {})
+    // capture initial computed values so user can reset individual tokens
+    if (typeof document !== 'undefined') {
+      const root = getComputedStyle(document.documentElement)
+      const snap: Record<string, string> = {}
+      GROUPS.flatMap(g => g.keys).forEach(k => {
+        const raw = root.getPropertyValue(k.key).trim()
+        if (raw) snap[k.key] = raw
+      })
+      setInitialSnapshot(snap)
+    }
   }, [])
 
   // live preview by applying variables to :root
@@ -60,6 +87,27 @@ export default function PaletteEditorPage() {
     setValues(v => ({ ...v, [key]: val }))
   }
 
+  const resetValue = useCallback((key: string) => {
+    setValues(v => {
+      const next = { ...v }
+      if (initialSnapshot[key]) next[key] = initialSnapshot[key]
+      else delete next[key]
+      return next
+    })
+  }, [initialSnapshot])
+
+  const resetAll = useCallback(() => {
+    setValues(initialSnapshot)
+  }, [initialSnapshot])
+
+  const toggleGroup = (title: string) => {
+    setExpanded(prev => {
+      const n = new Set(prev)
+      if (n.has(title)) n.delete(title); else n.add(title)
+      return n
+    })
+  }
+
   function applyPalette(p: Palette) {
     setSelected(p.id)
     const json = p.json || {}
@@ -68,15 +116,25 @@ export default function PaletteEditorPage() {
   }
 
   async function savePalette() {
-    const res = await fetch('/api/palettes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selected || undefined, name, json: values }) })
-    if (!res.ok) return
-    const d = await res.json()
-    const p = d.palette as Palette
-    setSelected(p.id)
-    setPalettes(prev => {
-      const others = prev.filter(x => x.id !== p.id)
-      return [p, ...others]
-    })
+    setIsSaving(true)
+    try {
+      const res = await fetch('/api/palettes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selected || undefined, name, json: values }) })
+      if (!res.ok) {
+        throw new Error('Failed to save palette')
+      }
+      const d = await res.json()
+      const p = d.palette as Palette
+      setSelected(p.id)
+      setPalettes(prev => {
+        const others = prev.filter(x => x.id !== p.id)
+        return [p, ...others]
+      })
+      toast({ variant: 'success', title: 'Palette Saved!', description: 'Your new color scheme has been applied.' })
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not save the palette.' })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function applyForUser() {
@@ -125,57 +183,103 @@ export default function PaletteEditorPage() {
 
   return (
     <div className="container py-8">
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Theme & Palette Editor</h1>
-          <p className="text-muted-foreground">Tune your site colors with a live preview.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={savePalette}>Save Palette</Button>
-          <Button onClick={exportPalette} className="!bg-transparent !text-foreground !border-foreground/30 hover:!text-white">Export</Button>
-          <label className="btn btn-outline cursor-pointer">
-            Import
-            <input type="file" accept="application/json" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) importPalette(f) }} />
-          </label>
-          <Button onClick={applyForUser} className="!bg-secondary text-secondary-foreground">Apply for Me</Button>
-          <Button onClick={resetPalette} className="!bg-transparent !border-none text-muted-foreground hover:text-white">Reset</Button>
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4 justify-between">
+          <div className="space-y-2">
+            <h1 className="font-heading text-3xl font-bold">Theme & Palette Editor</h1>
+            <p className="text-muted-foreground text-sm">Refine your visual system. Search or expand groups to edit tokens.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground">Preset Name</label>
+                <input className="input w-48" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground">Load</label>
+                <select className="input w-48" value={selected} onChange={(e) => { const p = palettes.find(x => x.id === e.target.value); if (p) applyPalette(p) }}>
+                  <option value="">— Select —</option>
+                  {palettes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  className="input w-56"
+                  placeholder="Search tokens (e.g. primary)"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={savePalette} disabled={isSaving}>{isSaving ? <><Loader size={16} className="mr-2" /> Saving...</> : 'Save'}</Button>
+            <Button onClick={exportPalette} className="!bg-transparent !text-foreground !border-foreground/30 hover:!text-white">Export</Button>
+            <label className="btn btn-outline cursor-pointer text-xs">
+              Import
+              <input type="file" accept="application/json" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) importPalette(f) }} />
+            </label>
+            <Button onClick={applyForUser} className="!bg-secondary text-secondary-foreground">Apply (User)</Button>
+            <Button onClick={resetAll} className="!bg-transparent !border-none text-muted-foreground hover:text-white">Reset All</Button>
+          </div>
         </div>
       </div>
 
       <div className="grid md:grid-cols-12 gap-6">
-        {/* Color Controls */}
-        <div className="md:col-span-8 lg:col-span-9">
-          <div className="p-4 rounded-2xl bg-card shadow">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-4">
-              {KEYS.map(k => (
-                <div key={k.key} className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">{k.label}</label>
-                  <ColorPicker color={values[k.key] ?? ''} onChange={(c) => setValue(k.key, c)} />
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 text-xs text-muted-foreground">
-              Note: Colors are in HSL format. Use space-separated values (e.g., &quot;240 10% 3.9%&quot;).
-            </div>
-          </div>
+        {/* Color Controls (grouped + collapsible) */}
+        <div className="md:col-span-8 lg:col-span-9 space-y-4">
+          {GROUPS.map(group => {
+            const visibleKeys = group.keys.filter(k => !search || k.label.toLowerCase().includes(search.toLowerCase()) || k.key.toLowerCase().includes(search.toLowerCase()))
+            if (visibleKeys.length === 0) return null
+            const isOpen = expanded.has(group.title)
+            return (
+              <div key={group.title} className="rounded-2xl bg-card shadow border border-border/40 overflow-hidden">
+                <button type="button" onClick={() => toggleGroup(group.title)} className="w-full flex items-center justify-between px-4 py-3 text-left group">
+                  <span className="font-heading text-sm tracking-wide flex items-center gap-2">
+                    <span className={`inline-block transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>{group.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{isOpen ? 'Collapse' : 'Expand'}</span>
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4">
+                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+                      {visibleKeys.map(k => {
+                        const val = values[k.key] ?? ''
+                        const pairVal = k.pairWith ? (values[k.pairWith] ?? '') : ''
+                        const showContrast = !!(k.pairWith && val && pairVal)
+                        return (
+                          <div key={k.key} className="space-y-1.5 group/token">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-medium text-muted-foreground tracking-wide">{k.label}</label>
+                              <div className="flex items-center gap-1">
+                                {showContrast && <MiniContrast a={val} b={pairVal} />}
+                                <button type="button" onClick={() => resetValue(k.key)} className="text-[10px] px-1 py-0.5 rounded bg-background/60 border border-border/60 hover:border-primary/60 text-muted-foreground hover:text-foreground transition-colors">↺</button>
+                              </div>
+                            </div>
+                            <ColorPicker color={val} onChange={(c) => setValue(k.key, c)} />
+                            <input
+                              className="input w-full mt-1 h-8 text-xs"
+                              placeholder="H S% L%"
+                              value={val}
+                              onChange={(e) => setValue(k.key, e.target.value)}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          <div className="text-xs text-muted-foreground px-1">HSL format: e.g. <code>240 10% 3.9%</code>. Foreground + surface pairs show contrast badge.</div>
         </div>
 
-        {/* Presets & Info */}
-        <div className="md:col-span-4 lg:col-span-3 space-y-6">
+    {/* Presets & Preview Meta */}
+    <div className="md:col-span-4 lg:col-span-3 space-y-6">
           <div className="p-4 rounded-2xl bg-card shadow">
             <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">Preset Name</label>
-                <input className="input w-full" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">Load Preset</label>
-                <select className="input w-full" value={selected} onChange={(e) => { const p = palettes.find(x => x.id === e.target.value); if (p) applyPalette(p) }}>
-                  <option value="">-- Select --</option>
-                  {palettes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
+      <h3 className="font-heading text-sm mb-1">Accessibility</h3>
               <ContrastChecker fg={values['--foreground'] || '0 0% 98%'} bg={values['--background'] || '240 10% 3.9%'} />
+      <p className="text-xs text-muted-foreground leading-relaxed">Aim for contrast ≥ 4.5. Adjust background / foreground first, then refine accents.</p>
             </div>
           </div>
           <div className="p-4 rounded-2xl bg-card shadow">
@@ -197,7 +301,7 @@ export default function PaletteEditorPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="font-heading text-2xl mb-4 text-center">Live Preview</h2>
+  <h2 className="font-heading text-2xl mb-4 text-center">Live Preview</h2>
         <div className="border-2 border-dashed border-border rounded-2xl p-6 space-y-6 bg-background/80">
           <div className="grid md:grid-cols-3 gap-6">
             {/* Column 1: Buttons and Badges */}
@@ -292,5 +396,22 @@ function ContrastChecker({ fg, bg }: { fg: string; bg: string }) {
     <div className="text-xs text-gray-700">
       Contrast ratio: {ratio.toFixed(2)} {pass ? '✓ Passes WCAG AA' : '⚠ Fails AA (target ≥ 4.5)'}
     </div>
+  )
+}
+
+// Tiny inline contrast badge for token pairings
+function MiniContrast({ a, b }: { a: string; b: string }) {
+  const ar = parseRGB(a)
+  const br = parseRGB(b)
+  if (!ar || !br) return null
+  const ratio = contrastRatio(ar, br)
+  const pass = ratio >= 4.5
+  return (
+    <span
+      title={`Contrast ${ratio.toFixed(2)}${pass ? ' (passes AA)' : ' (fails AA)'}`}
+      className={`inline-flex items-center justify-center rounded px-1 h-4 text-[9px] font-mono tracking-tight border ${pass ? 'bg-emerald-600/30 text-emerald-200 border-emerald-500/40' : 'bg-amber-600/30 text-amber-200 border-amber-500/40'}`}
+    >
+      {ratio.toFixed(2)}
+    </span>
   )
 }
