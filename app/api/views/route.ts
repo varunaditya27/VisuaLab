@@ -10,13 +10,41 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   const parsed = ViewSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+
   const image = await prisma.image.findUnique({ where: { id: parsed.data.imageId }, select: { id: true } })
   if (!image) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  try {
-    const db = prisma as any
-    await db.imageView.create({ data: { imageId: image.id, userId: userId ?? undefined } })
-  } catch {}
+
+  // Best-effort client address for deduplication (works locally and behind proxies)
+  const xfwd = req.headers.get('x-forwarded-for') || ''
+  const ip = (xfwd.split(',')[0] || req.headers.get('x-real-ip') || req.headers.get('cf-connecting-ip') || '').trim() || undefined
+
   const db = prisma as any
+
+  // Deduplicate very recent duplicate opens (e.g., React StrictMode, double effects)
+  const windowMs = 15_000 // 15 seconds
+  const since = new Date(Date.now() - windowMs)
+
+  try {
+    const orTerms = [
+      ...(userId ? [{ userId }] as any[] : []),
+      ...(ip ? [{ ip }] as any[] : []),
+    ]
+    const where: any = {
+      imageId: image.id,
+      createdAt: { gte: since },
+    }
+    if (orTerms.length > 0) where.OR = orTerms
+
+    const existing = await db.imageView.findFirst({ where, select: { id: true } })
+
+    if (!existing) {
+      await db.imageView.create({ data: { imageId: image.id, userId: userId ?? undefined, ip } })
+    }
+  } catch {
+    // Non-fatal: if dedupe fails (e.g., invalid filter), still ensure we create a record
+    try { await (db as any).imageView.create({ data: { imageId: image.id, userId: userId ?? undefined, ip } }) } catch {}
+  }
+
   const count = await db.imageView.count({ where: { imageId: image.id } })
   return NextResponse.json({ views: count })
 }
