@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
-import UploadForm from '@/components/UploadForm'
 import { Button } from '@/components/ui/Button'
 import { LinkButton } from '@/components/ui/LinkButton'
-import { Plus, RefreshCw, FolderOpen, Images, Settings, Shield, LogIn, Scissors, BarChart2 } from 'lucide-react'
+import { RefreshCw, Images, Settings, Shield, LogIn, BarChart2, FolderOpen } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 type Album = { id: string; name: string; description?: string | null; _count?: { images: number } }
@@ -35,9 +34,7 @@ export default function AdminPage() {
   const [batchAlbum, setBatchAlbum] = useState<string>('')
   // editor moved to /admin/editor
   const [loading, setLoading] = useState(false)
-  const [creatingAlbum, setCreatingAlbum] = useState(false)
-  const [albumName, setAlbumName] = useState('')
-  const [albumDesc, setAlbumDesc] = useState('')
+  // Removed quick actions (album creation & inline upload)
 
   async function refreshAll() {
     setLoading(true)
@@ -80,19 +77,7 @@ export default function AdminPage() {
 
   // Editor moved to dedicated /admin/editor page
 
-  async function createAlbum(e: React.FormEvent) {
-    e.preventDefault()
-    if (!albumName.trim()) return
-    setCreatingAlbum(true)
-    try {
-      const res = await fetch('/api/albums', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: albumName.trim(), description: albumDesc.trim() || undefined }) })
-      if (res.ok) {
-        setAlbumName('')
-        setAlbumDesc('')
-        refreshAll()
-      }
-    } finally { setCreatingAlbum(false) }
-  }
+  // Album creation handler removed
 
   if (!loggedIn || role !== 'ADMIN') {
     return (
@@ -128,20 +113,6 @@ export default function AdminPage() {
       <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
         {/* Left Column */}
         <div className="md:col-span-1 lg:col-span-1 space-y-6">
-          {/* Quick Actions */}
-          <div className="p-4 rounded-2xl bg-card shadow">
-            <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><Plus size={18} /> Quick Actions</h3>
-            <div className="space-y-3">
-              <UploadForm onUploaded={refreshAll} />
-              <form onSubmit={createAlbum} className="space-y-3">
-                <input className="input w-full" placeholder="New album name" value={albumName} onChange={(e) => setAlbumName(e.target.value)} />
-                <Button className="w-full inline-flex items-center gap-2" disabled={creatingAlbum}>
-                  <FolderOpen size={16} /> Create Album
-                </Button>
-              </form>
-            </div>
-          </div>
-          
           {/* Navigation */}
           <div className="p-4 rounded-2xl bg-card shadow">
             <h3 className="font-heading text-lg mb-4 flex items-center gap-2"><Settings size={18} /> Navigation</h3>
@@ -151,6 +122,7 @@ export default function AdminPage() {
               <LinkButton href="/admin/editor">Image Editor</LinkButton>
               <LinkButton href="/admin/generator">AI Generator</LinkButton>
               <LinkButton href="/admin/palette">Theme Editor</LinkButton>
+              <LinkButton href="/upload">Upload Images</LinkButton>
             </div>
           </div>
         </div>

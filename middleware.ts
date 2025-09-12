@@ -5,7 +5,8 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const role = req.cookies.get('rbacRole')?.value || 'VIEWER'
 
-  const adminOnly = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
+  // Extend admin-only protection to /upload (unified upload page)
+  const adminOnly = pathname.startsWith('/admin') || pathname.startsWith('/api/admin') || pathname === '/upload'
   if (adminOnly && role !== 'ADMIN') {
     if (pathname.startsWith('/api')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
