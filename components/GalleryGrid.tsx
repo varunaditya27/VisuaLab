@@ -12,6 +12,7 @@ type ImageRec = {
   id: string
   title?: string | null
   thumbUrl?: string | null
+  thumb?: { jpg: string | null; webp: string | null; avif: string | null }
 }
 
 const breakpointColumnsObj = {
@@ -36,7 +37,7 @@ function GalleryItem({ image, onImageClick }: { image: ImageRec; onImageClick: (
   }
 
   const likeKey = likes[image.id]
-  const src = image.thumbUrl ?? null
+  const src = image.thumb?.jpg || image.thumbUrl || null
 
   return (
     <motion.div
@@ -50,14 +51,16 @@ function GalleryItem({ image, onImageClick }: { image: ImageRec; onImageClick: (
       >
         {src ? (
           <>
-            <motion.img 
-              src={src} 
-              alt={image.title ?? 'Gallery image'} 
-              className="h-auto w-full object-cover"
-              loading="lazy"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-            />
+            <motion.picture whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+              {image.thumb?.avif ? <source srcSet={image.thumb.avif} type="image/avif" /> : null}
+              {image.thumb?.webp ? <source srcSet={image.thumb.webp} type="image/webp" /> : null}
+              <img
+                src={src}
+                alt={image.title ?? 'Gallery image'}
+                className="h-auto w-full object-cover"
+                loading="lazy"
+              />
+            </motion.picture>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <motion.div 
               className="absolute bottom-0 left-0 p-4 w-full"

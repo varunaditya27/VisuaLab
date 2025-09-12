@@ -14,6 +14,12 @@ interface ImageModalProps {
   imageId?: string
 }
 
+type ImageFormats = {
+  thumb?: { jpg: string | null; webp: string | null; avif: string | null }
+  responsive?: Array<{ width: number; jpg: string | null; webp: string | null; avif: string | null }>
+  originalUrl?: string | null
+}
+
 export default function ImageModal({ src, title, onClose, imageId }: ImageModalProps) {
   const [scale, setScale] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -21,6 +27,7 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
   const [likeState, setLikeState] = useState<{ count: number; likedByMe: boolean } | null>(null)
   const [comments, setComments] = useState<Array<{ id: string; content: string; createdAt: string; user?: { id: string; username?: string } }>>([])
   const [commentDraft, setCommentDraft] = useState('')
+  const [formats, setFormats] = useState<ImageFormats | null>(null)
   
   const [viewer, setViewer] = useState<{ id?: string; username?: string } | null>(null)
   useEffect(() => {
@@ -48,15 +55,23 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
     
     const fetchData = async () => {
       try {
-        const [likesRes, commRes] = await Promise.all([
+        const [likesRes, commRes, imgRes] = await Promise.all([
           fetch(`/api/likes?imageId=${imageId}`),
-          fetch(`/api/comments?imageId=${imageId}`)
+          fetch(`/api/comments?imageId=${imageId}`),
+          fetch(`/api/images?imageId=${imageId}`)
         ])
         if (isCancelled) return
         if (likesRes.ok) setLikeState(await likesRes.json())
         if (commRes.ok) {
           const data = await commRes.json()
           setComments(data.comments || [])
+        }
+        if (imgRes.ok) {
+          const data = await imgRes.json()
+          const rec = data.images?.[0]
+          if (rec) {
+            setFormats({ thumb: rec.thumb, responsive: rec.responsive, originalUrl: rec.originalUrl })
+          }
         }
       } catch (err) {
         if (!isCancelled) console.error("Failed to fetch image metadata", err)
@@ -140,19 +155,44 @@ export default function ImageModal({ src, title, onClose, imageId }: ImageModalP
                 <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
               </div>
             )}
-            <motion.img
-              src={src}
-              alt={title || "Modal image"}
-              className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"
-              onLoad={() => setIsLoaded(true)}
-              style={{
-                scale,
-                rotate: rotation,
-              }}
+            <motion.picture
+              style={{ scale, rotate: rotation }}
               drag
               dragConstraints={{ left: 0, top: 0, right: 0, bottom: 0 }}
               dragTransition={{ bounceStiffness: 100, bounceDamping: 20 }}
-            />
+            >
+              {/* Build full srcset across formats if available */}
+              {formats?.responsive?.length ? (
+                (() => {
+                  const sorted = [...formats.responsive!].sort((a, b) => a.width - b.width)
+                  const avifSet = sorted.filter(r => r.avif).map(r => `${r.avif} ${r.width}w`).join(', ')
+                  const webpSet = sorted.filter(r => r.webp).map(r => `${r.webp} ${r.width}w`).join(', ')
+                  const jpgSet = sorted.filter(r => r.jpg).map(r => `${r.jpg} ${r.width}w`).join(', ')
+                  const fallback = sorted[sorted.length - 1]
+                  return (
+                    <>
+                      {avifSet ? <source srcSet={avifSet} sizes="100vw" type="image/avif" /> : null}
+                      {webpSet ? <source srcSet={webpSet} sizes="100vw" type="image/webp" /> : null}
+                      <img
+                        src={fallback.jpg || src}
+                        srcSet={jpgSet || undefined}
+                        sizes="100vw"
+                        alt={title || 'Modal image'}
+                        className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"
+                        onLoad={() => setIsLoaded(true)}
+                      />
+                    </>
+                  )
+                })()
+              ) : (
+                <img
+                  src={src}
+                  alt={title || 'Modal image'}
+                  className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"
+                  onLoad={() => setIsLoaded(true)}
+                />
+              )}
+            </motion.picture>
           </main>
 
           {/* Footer & Comments */}
