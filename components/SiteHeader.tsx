@@ -88,11 +88,6 @@ function UserNav({ username, role }: { username: string | null, role: 'ADMIN' | 
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-popover p-2 shadow-lg ring-1 ring-border focus:outline-none"
           >
-            {role === 'ADMIN' && (
-              <LinkButton href="/admin" className="w-full justify-start !bg-transparent !border-none text-popover-foreground hover:bg-accent">
-                <Shield size={16} className="mr-2" /> Admin Panel
-              </LinkButton>
-            )}
             <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
               <LogOut size={16} className="mr-2" /> Logout
             </Button>
@@ -119,7 +114,7 @@ export default function SiteHeader() {
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+      <div className="container relative flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <motion.div whileHover={{ rotate: -15, scale: 1.1 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -127,10 +122,12 @@ export default function SiteHeader() {
             </motion.div>
             <span className="hidden font-bold sm:inline-block">VisuaLab</span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {mainNav.map(item => <NavLink key={item.href} {...item} />)}
-          </nav>
         </div>
+
+        {/* Centered Main Navigation (desktop) */}
+        <nav className="pointer-events-auto absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex items-center space-x-6 text-sm font-medium">
+          {mainNav.map(item => <NavLink key={item.href} {...item} />)}
+        </nav>
 
         {/* Mobile Menu Button */}
         <div className="flex flex-1 items-center justify-start md:hidden">
@@ -152,6 +149,12 @@ export default function SiteHeader() {
             </AnimatePresence>
             <span className="sr-only">Toggle Menu</span>
           </Button>
+          {/* Mobile: Admin Panel quick access */}
+          {role === 'ADMIN' && (
+            <Link href="/admin" className="ml-2 inline-flex items-center rounded-md border border-primary/50 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 md:hidden">
+              <Shield size={16} className="mr-2" /> Admin
+            </Link>
+          )}
         </div>
         
         {/* Mobile Menu */}
@@ -182,6 +185,12 @@ export default function SiteHeader() {
         </AnimatePresence>
 
         <div className="flex flex-1 items-center justify-end">
+          {/* Desktop: Admin Panel quick access */}
+          {role === 'ADMIN' && (
+            <LinkButton href="/admin" className="mr-2 hidden md:inline-flex !bg-transparent !border-primary/50 !text-primary">
+              <Shield size={16} className="mr-2" /> Admin Panel
+            </LinkButton>
+          )}
           <UserNav username={username} role={role} />
         </div>
       </div>
