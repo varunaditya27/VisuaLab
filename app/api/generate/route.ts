@@ -80,18 +80,26 @@ export async function POST(req: Request) {
         const hasR2 = !!(bucket && process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY)
         if (hasR2) {
           await r2PutObject(bucket!, `${baseKey}/original.jpg`, processed.original.buffer, mime)
-          await r2PutObject(bucket!, `${baseKey}/thumb.jpg`, processed.thumb.buffer, 'image/jpeg')
+          await r2PutObject(bucket!, `${baseKey}/thumb.jpg`, processed.thumb.jpeg, 'image/jpeg')
+          await r2PutObject(bucket!, `${baseKey}/thumb.webp`, processed.thumb.webp, 'image/webp')
+          await r2PutObject(bucket!, `${baseKey}/thumb.avif`, processed.thumb.avif, 'image/avif')
           for (const res of processed.responsive) {
-            await r2PutObject(bucket!, `${baseKey}/w${res.width}.jpg`, res.buffer, 'image/jpeg')
+            await r2PutObject(bucket!, `${baseKey}/w${res.width}.jpg`, res.jpeg, 'image/jpeg')
+            await r2PutObject(bucket!, `${baseKey}/w${res.width}.webp`, res.webp, 'image/webp')
+            await r2PutObject(bucket!, `${baseKey}/w${res.width}.avif`, res.avif, 'image/avif')
           }
         } else {
           const publicDir = path.join(process.cwd(), 'public')
           const targetDir = path.join(publicDir, baseKey)
           await fs.mkdir(targetDir, { recursive: true })
           await fs.writeFile(path.join(targetDir, 'original.jpg'), processed.original.buffer)
-          await fs.writeFile(path.join(targetDir, 'thumb.jpg'), processed.thumb.buffer)
+          await fs.writeFile(path.join(targetDir, 'thumb.jpg'), processed.thumb.jpeg)
+          await fs.writeFile(path.join(targetDir, 'thumb.webp'), processed.thumb.webp)
+          await fs.writeFile(path.join(targetDir, 'thumb.avif'), processed.thumb.avif)
           for (const res of processed.responsive) {
-            await fs.writeFile(path.join(targetDir, `w${res.width}.jpg`), res.buffer)
+            await fs.writeFile(path.join(targetDir, `w${res.width}.jpg`), res.jpeg)
+            await fs.writeFile(path.join(targetDir, `w${res.width}.webp`), res.webp)
+            await fs.writeFile(path.join(targetDir, `w${res.width}.avif`), res.avif)
           }
         }
         const imgRow = await db.image.create({
@@ -105,8 +113,10 @@ export async function POST(req: Request) {
             sizeBytes: processed.original.info.size ?? img.buffer.byteLength,
             r2Key: hasR2 ? `${baseKey}/original.jpg` : `/${baseKey}/original.jpg`,
             thumbKey: hasR2 ? `${baseKey}/thumb.jpg` : `/${baseKey}/thumb.jpg`,
+            // Store JPG keys for compatibility; WEBP/AVIF available by swapping extension
             responsive: processed.responsive.map(r => ({ width: r.width, key: hasR2 ? `${baseKey}/w${r.width}.jpg` : `/${baseKey}/w${r.width}.jpg` })),
-            exif: processed.meta.exif as any,
+            // Include IPTC under exif
+            exif: ({ ...(processed.meta.exif as any), iptc: processed.meta.iptc } as any),
             generationMeta: {
               prompt,
               seed,
