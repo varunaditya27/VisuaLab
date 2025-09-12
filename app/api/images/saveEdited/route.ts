@@ -30,12 +30,17 @@ export async function POST(req: Request) {
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const processed = await sharp(buffer).jpeg({ quality: 90 }).toBuffer({ resolveWithObject: true })
-  const thumb = await sharp(processed.data).resize(400).jpeg({ quality: 80 }).toBuffer()
+  const thumbJpeg = await sharp(processed.data).resize(400).jpeg({ quality: 80 }).toBuffer()
+  const thumbWebp = await sharp(processed.data).resize(400).webp({ quality: 80 }).toBuffer()
+  const thumbAvif = await sharp(processed.data).resize(400).avif({ quality: 60 }).toBuffer()
   const widths = [640, 1024, 1600]
   const responsive = await Promise.all(
     widths.map(async (w) => {
-      const b = await sharp(processed.data).resize(w).jpeg({ quality: 85 }).toBuffer()
-      return { width: w, buffer: b }
+      const base = sharp(processed.data).resize(w)
+      const jpeg = await base.clone().jpeg({ quality: 85 }).toBuffer()
+      const webp = await base.clone().webp({ quality: 80 }).toBuffer()
+      const avif = await base.clone().avif({ quality: 60 }).toBuffer()
+      return { width: w, jpeg, webp, avif }
     })
   )
 
@@ -46,18 +51,26 @@ export async function POST(req: Request) {
 
   if (hasR2) {
     await r2PutObject(bucket!, `${baseKey}/original.jpg`, processed.data, 'image/jpeg')
-    await r2PutObject(bucket!, `${baseKey}/thumb.jpg`, thumb, 'image/jpeg')
+    await r2PutObject(bucket!, `${baseKey}/thumb.jpg`, thumbJpeg, 'image/jpeg')
+    await r2PutObject(bucket!, `${baseKey}/thumb.webp`, thumbWebp, 'image/webp')
+    await r2PutObject(bucket!, `${baseKey}/thumb.avif`, thumbAvif, 'image/avif')
     for (const r of responsive) {
-      await r2PutObject(bucket!, `${baseKey}/w${r.width}.jpg`, r.buffer, 'image/jpeg')
+      await r2PutObject(bucket!, `${baseKey}/w${r.width}.jpg`, r.jpeg, 'image/jpeg')
+      await r2PutObject(bucket!, `${baseKey}/w${r.width}.webp`, r.webp, 'image/webp')
+      await r2PutObject(bucket!, `${baseKey}/w${r.width}.avif`, r.avif, 'image/avif')
     }
   } else {
     const publicDir = path.join(process.cwd(), 'public')
     const targetDir = path.join(publicDir, baseKey)
     await fs.mkdir(targetDir, { recursive: true })
     await fs.writeFile(path.join(targetDir, 'original.jpg'), processed.data)
-    await fs.writeFile(path.join(targetDir, 'thumb.jpg'), thumb)
+    await fs.writeFile(path.join(targetDir, 'thumb.jpg'), thumbJpeg)
+    await fs.writeFile(path.join(targetDir, 'thumb.webp'), thumbWebp)
+    await fs.writeFile(path.join(targetDir, 'thumb.avif'), thumbAvif)
     for (const r of responsive) {
-      await fs.writeFile(path.join(targetDir, `w${r.width}.jpg`), r.buffer)
+      await fs.writeFile(path.join(targetDir, `w${r.width}.jpg`), r.jpeg)
+      await fs.writeFile(path.join(targetDir, `w${r.width}.webp`), r.webp)
+      await fs.writeFile(path.join(targetDir, `w${r.width}.avif`), r.avif)
     }
   }
 
