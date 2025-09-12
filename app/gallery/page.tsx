@@ -1,4 +1,5 @@
 import GalleryExplorer from '@/components/GalleryExplorer'
+import TagCloud from '@/components/TagCloud'
 
 async function fetchImages(params: { album?: string | null; q?: string; tags?: string; from?: string; to?: string; license?: string } = {}) {
   try {
@@ -30,16 +31,23 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold mb-1">Gallery</h1>
-          <p className="text-muted-foreground">Browse all creations{album ? ` in ${album}` : ''}.</p>
-        </div>
-        {images.length > 0 && (
+      <div className="mb-8 grid gap-6 lg:grid-cols-[1fr,minmax(280px,420px)] items-start">
+        <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-muted-foreground">{images.length} {images.length === 1 ? 'Image' : 'Images'}</span>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold mb-1">Gallery</h1>
+            <p className="text-muted-foreground">Browse all creations{album ? ` in ${album}` : ''}.</p>
           </div>
-        )}
+          {images.length > 0 && (
+            <div>
+              <span className="text-sm text-muted-foreground">{images.length} {images.length === 1 ? 'Image' : 'Images'}</span>
+            </div>
+          )}
+        </div>
+
+        <aside className="lg:sticky lg:top-4">
+          <h2 className="font-heading text-sm uppercase tracking-wide text-muted-foreground mb-2">Explore by tags</h2>
+          <TagCloud limit={48} />
+        </aside>
       </div>
 
       <GalleryExplorer initial={{ images, album, q: q || undefined, tags: tags || undefined, from, to, license }} />
