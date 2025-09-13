@@ -4,8 +4,6 @@ VisuaLab is a modern, extensible media platform designed for performance, scalab
 
 This project was inspired by the goal of re-engineering a classic PHP image gallery into a modern web application, bringing features like a responsive UI, pluggable architecture, and advanced content management to a new generation of users. The original legacy project can be found [here](https://github.com/halojoy/PHP-ImageGallery).
 
-For detailed information on architecture, installation, and usage, please see our **[Complete Documentation](./docs/installation.md)**.
-
 ## Features
 
 *   **Responsive & Accessible UI**: A clean and modern interface that works on all devices.
